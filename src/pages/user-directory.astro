@@ -1,0 +1,303 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="CSMP - User Directory & Credit Data" pageTitle="User Directory & Credit Data" currentPath="/user-directory">
+  <!-- Bento Stats Row -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-container-highest shadow-sm">
+      <p class="font-label-caps text-label-caps text-on-surface-variant mb-2">Total Active Users</p>
+      <div class="flex items-end gap-2">
+        <span class="font-display-lg text-display-lg text-primary">12,482</span>
+        <span class="flex items-center text-secondary text-body-sm font-bold pb-1">
+          <span class="material-symbols-outlined text-[16px]">arrow_upward</span> 12%
+        </span>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-container-highest shadow-sm">
+      <p class="font-label-caps text-label-caps text-on-surface-variant mb-2">Avg. DID Score</p>
+      <div class="flex items-end gap-2">
+        <span class="font-display-lg text-display-lg text-primary">742</span>
+        <span class="flex items-center text-secondary text-body-sm font-bold pb-1">
+          <span class="material-symbols-outlined text-[16px]">trending_up</span> Good
+        </span>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-container-highest shadow-sm">
+      <p class="font-label-caps text-label-caps text-on-surface-variant mb-2">Portfolio Default Rate</p>
+      <div class="flex items-end gap-2">
+        <span class="font-display-lg text-display-lg text-primary">0.84%</span>
+        <span class="flex items-center text-on-tertiary-container text-body-sm font-bold pb-1">
+          <span class="material-symbols-outlined text-[16px]">arrow_downward</span> 0.2%
+        </span>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-container-highest shadow-sm">
+      <p class="font-label-caps text-label-caps text-on-surface-variant mb-2">Pending Verifications</p>
+      <div class="flex items-end gap-2">
+        <span class="font-display-lg text-display-lg text-primary">158</span>
+        <span class="flex items-center text-on-error-container text-body-sm font-bold pb-1">
+          <span class="material-symbols-outlined text-[16px]">priority_high</span> High
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Directory Section -->
+  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm overflow-hidden">
+    <!-- Search & Filter Bar -->
+    <div class="p-gutter border-b border-surface-container-highest bg-surface-container-low flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div class="relative w-full md:w-[400px]">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+        <input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-body-md" placeholder="Search user by name, DID, or phone..." type="text"/>
+      </div>
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <span class="font-body-md text-on-surface-variant whitespace-nowrap">Filter by:</span>
+        <select class="px-4 py-2 bg-surface border border-outline-variant rounded-lg font-body-md focus:outline-none focus:border-primary appearance-none pr-10 cursor-pointer relative">
+          <option value="all">All Users</option>
+          <option value="defaulted">Defaulted</option>
+          <option value="active">Active</option>
+          <option selected value="excellent">Excellent Credit</option>
+        </select>
+        <button class="bg-primary text-on-primary px-lg py-2 rounded-lg font-title-sm text-title-sm hover:opacity-90 active:scale-[0.98] transition-all">
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container text-on-surface-variant border-b border-surface-container-highest">
+            <th class="px-gutter py-4 font-title-sm text-title-sm">User Name</th>
+            <th class="px-gutter py-4 font-title-sm text-title-sm">Phone Number</th>
+            <th class="px-gutter py-4 font-title-sm text-title-sm">DID Credit Score</th>
+            <th class="px-gutter py-4 font-title-sm text-title-sm">Active Pools</th>
+            <th class="px-gutter py-4 font-title-sm text-title-sm text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-container-highest">
+          <!-- Row 1 -->
+          <tr class="hover:bg-primary-fixed/5 transition-colors group cursor-pointer">
+            <td class="px-gutter py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-primary">JD</div>
+                <div>
+                  <p class="font-title-sm text-title-sm text-on-surface">Julianne Devis</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">julianne.d@example.com</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 font-code-mono text-code-mono text-on-surface-variant">+1 (555) 012-3456</td>
+            <td class="px-gutter py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-bold text-body-sm">850</span>
+            </td>
+            <td class="px-gutter py-4">
+              <div class="flex -space-x-2">
+                <div class="w-6 h-6 rounded-full border border-surface bg-primary/10 flex items-center justify-center text-[10px] font-bold">4</div>
+                <div class="w-6 h-6 rounded-full border border-surface bg-secondary/10 flex items-center justify-center text-[10px] font-bold">P</div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 text-right">
+              <a class="text-primary font-title-sm text-title-sm hover:underline decoration-2 underline-offset-4" href="#">View Profile</a>
+            </td>
+          </tr>
+          <!-- Row 2 -->
+          <tr class="hover:bg-primary-fixed/5 transition-colors cursor-pointer">
+            <td class="px-gutter py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-primary">MM</div>
+                <div>
+                  <p class="font-title-sm text-title-sm text-on-surface">Marcus Miller</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">m.miller@corp.net</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 font-code-mono text-code-mono text-on-surface-variant">+1 (555) 987-6543</td>
+            <td class="px-gutter py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full bg-tertiary-container/10 text-on-tertiary-container font-bold text-body-sm">450</span>
+            </td>
+            <td class="px-gutter py-4">
+              <div class="flex -space-x-2">
+                <div class="w-6 h-6 rounded-full border border-surface bg-primary/10 flex items-center justify-center text-[10px] font-bold">1</div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 text-right">
+              <a class="text-primary font-title-sm text-title-sm hover:underline decoration-2 underline-offset-4" href="#">View Profile</a>
+            </td>
+          </tr>
+          <!-- Row 3 -->
+          <tr class="hover:bg-primary-fixed/5 transition-colors cursor-pointer">
+            <td class="px-gutter py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-primary">SC</div>
+                <div>
+                  <p class="font-title-sm text-title-sm text-on-surface">Sarah Chen</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">schen.fin@web.com</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 font-code-mono text-code-mono text-on-surface-variant">+44 20 7946 0123</td>
+            <td class="px-gutter py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full bg-on-surface-variant/10 text-on-surface-variant font-bold text-body-sm">720</span>
+            </td>
+            <td class="px-gutter py-4">
+              <div class="flex -space-x-2">
+                <div class="w-6 h-6 rounded-full border border-surface bg-primary/10 flex items-center justify-center text-[10px] font-bold">3</div>
+                <div class="w-6 h-6 rounded-full border border-surface bg-secondary/10 flex items-center justify-center text-[10px] font-bold">A</div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 text-right">
+              <a class="text-primary font-title-sm text-title-sm hover:underline decoration-2 underline-offset-4" href="#">View Profile</a>
+            </td>
+          </tr>
+          <!-- Row 4 -->
+          <tr class="hover:bg-primary-fixed/5 transition-colors cursor-pointer">
+            <td class="px-gutter py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-primary">RB</div>
+                <div>
+                  <p class="font-title-sm text-title-sm text-on-surface">Robert Blackstone</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">r.stone@global.io</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 font-code-mono text-code-mono text-on-surface-variant">+1 (555) 234-5678</td>
+            <td class="px-gutter py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-bold text-body-sm">810</span>
+            </td>
+            <td class="px-gutter py-4">
+              <div class="flex -space-x-2">
+                <div class="w-6 h-6 rounded-full border border-surface bg-primary/10 flex items-center justify-center text-[10px] font-bold">5</div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 text-right">
+              <a class="text-primary font-title-sm text-title-sm hover:underline decoration-2 underline-offset-4" href="#">View Profile</a>
+            </td>
+          </tr>
+          <!-- Row 5 -->
+          <tr class="hover:bg-primary-fixed/5 transition-colors cursor-pointer">
+            <td class="px-gutter py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-bold text-primary">EL</div>
+                <div>
+                  <p class="font-title-sm text-title-sm text-on-surface">Elena Lopez</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">elena@fintech.dev</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 font-code-mono text-code-mono text-on-surface-variant">+34 912 345 678</td>
+            <td class="px-gutter py-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-bold text-body-sm">790</span>
+            </td>
+            <td class="px-gutter py-4">
+              <div class="flex -space-x-2">
+                <div class="w-6 h-6 rounded-full border border-surface bg-primary/10 flex items-center justify-center text-[10px] font-bold">2</div>
+              </div>
+            </td>
+            <td class="px-gutter py-4 text-right">
+              <a class="text-primary font-title-sm text-title-sm hover:underline decoration-2 underline-offset-4" href="#">View Profile</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination -->
+    <div class="p-gutter border-t border-surface-container-highest flex items-center justify-between">
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Showing 1 to 5 of 12,482 users</p>
+      <div class="flex items-center gap-2">
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+        </button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-on-primary font-bold text-body-sm">1</button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">2</button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">3</button>
+        <span class="px-2 text-on-surface-variant">...</span>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">2496</button>
+        <button class="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contextual Insights Section (Asymmetric / Glassmorphism) -->
+  <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 relative overflow-hidden rounded-xl border border-primary/10 p-gutter bg-gradient-to-br from-primary to-primary-container text-on-primary">
+      <div class="relative z-10">
+        <h3 class="font-headline-md text-headline-md mb-2">Institutional Credit Report</h3>
+        <p class="font-body-md text-body-md opacity-80 mb-6 max-w-md">Comprehensive analysis of the current portfolio health. Decentralized Identity (DID) score distribution remains skewed toward 'Excellent' (750+), indicating strong protocol stability.</p>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20">
+            <p class="text-xs uppercase font-bold tracking-widest opacity-60 mb-1">Top Tier</p>
+            <p class="text-2xl font-bold">78%</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20">
+            <p class="text-xs uppercase font-bold tracking-widest opacity-60 mb-1">Med Tier</p>
+            <p class="text-2xl font-bold">15%</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20">
+            <p class="text-xs uppercase font-bold tracking-widest opacity-60 mb-1">At Risk</p>
+            <p class="text-2xl font-bold">7%</p>
+          </div>
+        </div>
+      </div>
+      <!-- Background Visuals -->
+      <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-secondary/20 blur-3xl rounded-full"></div>
+    </div>
+    
+    <div class="bg-surface-container-lowest p-gutter rounded-xl border border-surface-container-highest shadow-sm">
+      <h3 class="font-title-sm text-title-sm text-primary mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[20px]">verified_user</span>
+        Recent Activity
+      </h3>
+      <div class="space-y-4">
+        <div class="flex gap-3">
+          <div class="mt-1 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
+          <div>
+            <p class="font-body-sm text-body-sm"><strong>Sarah Chen</strong> score updated to <span class="text-secondary font-bold">720</span></p>
+            <p class="text-[10px] text-on-surface-variant uppercase">2 minutes ago</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="mt-1 w-2 h-2 rounded-full bg-tertiary-fixed-dim shrink-0"></div>
+          <div>
+            <p class="font-body-sm text-body-sm"><strong>Marcus Miller</strong> missed pool contribution</p>
+            <p class="text-[10px] text-on-surface-variant uppercase">1 hour ago</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="mt-1 w-2 h-2 rounded-full bg-primary shrink-0"></div>
+          <div>
+            <p class="font-body-sm text-body-sm"><strong>Julianne Devis</strong> joined "Global Yield" pool</p>
+            <p class="text-[10px] text-on-surface-variant uppercase">4 hours ago</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="mt-1 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
+          <div>
+            <p class="font-body-sm text-body-sm">KYC Verified: <strong>Elena Lopez</strong></p>
+            <p class="text-[10px] text-on-surface-variant uppercase">Yesterday</p>
+          </div>
+        </div>
+      </div>
+      <button class="w-full mt-6 py-2 text-primary font-title-sm text-title-sm border border-primary/20 rounded-lg hover:bg-primary/5 transition-colors">
+        View Audit Log
+      </button>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Simple micro-interaction for rows
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('click', () => {
+            if (row.querySelector('a')) {
+                // Simulating a navigation feel
+                row.style.opacity = '0.5';
+                setTimeout(() => row.style.opacity = '1', 150);
+            }
+        });
+    });
+  </script>
+</AdminLayout>

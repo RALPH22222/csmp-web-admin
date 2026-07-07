@@ -12,6 +12,7 @@ const { title = "CSMP Admin", pageTitle = "Overview Dashboard", currentPath = "/
 
 <Layout title={title} bodyClass="flex min-h-screen text-on-surface">
 	<Fragment slot="head">
+		<slot name="head" />
 	</Fragment>
 	<!-- SIDE BAR NAVIGATION -->
 	<aside class="w-[260px] h-screen fixed left-0 top-0 bg-primary border-r border-outline-variant/10 flex flex-col py-lg z-50">

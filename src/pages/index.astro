@@ -303,19 +303,8 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
             >location_on</span
           >
         </div>
-        <div
-          class="relative w-full h-40 rounded-lg overflow-hidden border border-outline-variant/20"
-        >
+        <div class="relative w-full h-[280px] rounded-lg overflow-hidden border border-outline-variant/20">
           <div id="philippines-map" class="w-full h-full z-10"></div>
-          <div
-            class="absolute inset-0 bg-primary/10 flex items-center justify-center pointer-events-none z-20"
-          >
-            <div
-              class="bg-white/90 backdrop-blur-sm px-3 py-1 rounded text-[11px] font-bold text-primary shadow-sm"
-            >
-              VIEW HEATMAP
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -446,6 +435,11 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         
         L.marker([coords[0] + offsetLat, coords[1] + offsetLng], { icon: customIcon }).addTo(map);
       });
+
+      // Force Leaflet to recalculate the container size to prevent gray/missing tiles
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
     }
   </script>
 </AdminLayout>

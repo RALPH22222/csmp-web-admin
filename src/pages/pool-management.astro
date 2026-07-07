@@ -1,15 +1,58 @@
 ---
-import AdminLayout from '../layouts/AdminLayout.astro';
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { getAdminPools } from "../server/services/poolService";
+
+let pools: any[] = [];
+
+try {
+  pools = await getAdminPools();
+} catch (e) {
+  console.error("Failed to fetch pools", e);
+}
+
+const activePools =
+  pools?.filter(
+    (p) => p.pool_statuses?.status_name?.toLowerCase() === "active",
+  ) || [];
+const formingPools =
+  pools?.filter(
+    (p) => p.pool_statuses?.status_name?.toLowerCase() === "forming",
+  ) || [];
+
+const totalManaged =
+  pools?.reduce((acc, p) => acc + Number(p.total_payout_amount || 0), 0) || 0;
+const avgContribution = pools?.length
+  ? pools.reduce(
+      (acc, p) => acc + Number(p.cycle_contribution_amount || 0),
+      0,
+    ) / pools.length
+  : 0;
+
+const formatCurrency = (val: number) =>
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
+    val,
+  );
 ---
 
-<AdminLayout title="CSMP - Pool Management" pageTitle="Pool Management" currentPath="/pool-management">
+<AdminLayout
+  title="CSMP - Pool Management"
+  pageTitle="Pool Management"
+  currentPath="/pool-management"
+>
   <!-- Header Section -->
   <div class="flex justify-between items-center mb-xl">
     <div>
-      <h2 class="font-display-lg text-display-lg text-primary">Manage Savings Pools</h2>
-      <p class="text-on-surface-variant font-body-md text-body-md mt-1">Oversee institutional micro-finance cycles and member allocations.</p>
+      <h2 class="font-display-lg text-display-lg text-primary">
+        Manage Savings Pools
+      </h2>
+      <p class="text-on-surface-variant font-body-md text-body-md mt-1">
+        Oversee institutional micro-finance cycles and member allocations.
+      </p>
     </div>
-    <button class="flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-xl font-title-sm text-title-sm hover:opacity-90 transition-all active:scale-95 shadow-sm" onclick="toggleModal('pool-modal')">
+    <button
+      class="flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-xl font-title-sm text-title-sm hover:opacity-90 transition-all active:scale-95 shadow-sm"
+      onclick="toggleModal('pool-modal')"
+    >
       <span class="material-symbols-outlined">add</span>
       Create New Pool
     </button>
@@ -17,164 +60,255 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 
   <!-- Metric Overview (Bento Style) -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-lg mb-xl">
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30">
-      <p class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">Total Managed Funds</p>
-      <h3 class="font-display-lg text-display-lg text-primary">₱1.2M</h3>
+    <div
+      class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30"
+    >
+      <p
+        class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2"
+      >
+        Total Managed Funds
+      </p>
+      <h3 class="font-display-lg text-display-lg text-primary">
+        {formatCurrency(totalManaged)}
+      </h3>
       <div class="flex items-center gap-1 mt-2 text-secondary">
-        <span class="material-symbols-outlined text-sm">trending_up</span>
-        <span class="text-body-sm font-body-sm">+12% this month</span>
+        <span class="material-symbols-outlined text-sm">payments</span>
+        <span class="text-body-sm font-body-sm">All Time</span>
       </div>
     </div>
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30">
-      <p class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">Active Cycles</p>
-      <h3 class="font-display-lg text-display-lg text-primary">24</h3>
-      <p class="text-on-surface-variant text-body-sm font-body-sm mt-2">Across 8 regions</p>
+    <div
+      class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30"
+    >
+      <p
+        class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2"
+      >
+        Active Cycles
+      </p>
+      <h3 class="font-display-lg text-display-lg text-primary">
+        {activePools.length}
+      </h3>
+      <p class="text-on-surface-variant text-body-sm font-body-sm mt-2">
+        Currently running
+      </p>
     </div>
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30">
-      <p class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">Pending Approvals</p>
-      <h3 class="font-display-lg text-display-lg text-tertiary-fixed-dim">07</h3>
-      <p class="text-on-surface-variant text-body-sm font-body-sm mt-2">Requires verification</p>
+    <div
+      class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30"
+    >
+      <p
+        class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2"
+      >
+        Forming Pools
+      </p>
+      <h3 class="font-display-lg text-display-lg text-tertiary-fixed-dim">
+        {formingPools.length}
+      </h3>
+      <p class="text-on-surface-variant text-body-sm font-body-sm mt-2">
+        Recruiting members
+      </p>
     </div>
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 overflow-hidden relative">
+    <div
+      class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 overflow-hidden relative"
+    >
       <div class="relative z-10">
-        <p class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">Avg. Contribution</p>
-        <h3 class="font-display-lg text-display-lg text-primary">₱420</h3>
-        <p class="text-on-surface-variant text-body-sm font-body-sm mt-2">Per member/week</p>
+        <p
+          class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2"
+        >
+          Avg. Contribution
+        </p>
+        <h3 class="font-display-lg text-display-lg text-primary">
+          {formatCurrency(avgContribution)}
+        </h3>
+        <p class="text-on-surface-variant text-body-sm font-body-sm mt-2">
+          Per member
+        </p>
       </div>
     </div>
   </div>
 
   <!-- Pool Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-    <!-- Card 1 -->
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
-      <div class="flex justify-between items-start mb-lg">
-        <h4 class="font-headline-md text-headline-md text-primary">Magay Market Group A</h4>
-        <span class="bg-secondary/15 text-secondary px-3 py-1 rounded-full font-label-caps text-label-caps uppercase">Active</span>
-      </div>
-      <div class="space-y-4">
-        <div class="flex justify-between items-center text-body-md font-body-md">
-          <span class="text-on-surface-variant">Max Members</span>
-          <span class="text-primary font-semibold">10</span>
-        </div>
-        <div class="flex justify-between items-center text-body-md font-body-md">
-          <span class="text-on-surface-variant">Contribution</span>
-          <span class="text-primary font-semibold">₱500 / week</span>
-        </div>
-        <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-          <div class="bg-secondary h-full w-[80%] rounded-full"></div>
-        </div>
-        <div class="flex justify-between items-center text-body-sm font-body-sm">
-          <span class="text-on-surface-variant">8 of 10 filled</span>
-          <span class="text-primary">Next cycle: Oct 24</span>
-        </div>
-      </div>
-      <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">Manage Details</button>
-    </div>
-    <!-- Card 2 -->
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
-      <div class="flex justify-between items-start mb-lg">
-        <h4 class="font-headline-md text-headline-md text-primary">Eastern Village B</h4>
-        <span class="bg-tertiary-fixed/30 text-tertiary-fixed-dim px-3 py-1 rounded-full font-label-caps text-label-caps uppercase">Forming</span>
-      </div>
-      <div class="space-y-4">
-        <div class="flex justify-between items-center text-body-md font-body-md">
-          <span class="text-on-surface-variant">Max Members</span>
-          <span class="text-primary font-semibold">15</span>
-        </div>
-        <div class="flex justify-between items-center text-body-md font-body-md">
-          <span class="text-on-surface-variant">Contribution</span>
-          <span class="text-primary font-semibold">₱200 / week</span>
-        </div>
-        <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-          <div class="bg-tertiary-fixed-dim h-full w-[30%] rounded-full"></div>
-        </div>
-        <div class="flex justify-between items-center text-body-sm font-body-sm">
-          <span class="text-on-surface-variant">4 of 15 filled</span>
-          <span class="text-primary">Recruiting</span>
-        </div>
-      </div>
-      <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">Manage Details</button>
-    </div>
-    <!-- Card 3 -->
-    <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
-      <div class="flex justify-between items-start mb-lg">
-        <h4 class="font-headline-md text-headline-md text-primary">Zamboanga West C</h4>
-        <span class="bg-secondary/15 text-secondary px-3 py-1 rounded-full font-label-caps text-label-caps uppercase">Active</span>
-      </div>
-      <div class="space-y-4">
-        <div class="flex justify-between items-center text-body-md font-body-md">
-          <span class="text-on-surface-variant">Max Members</span>
-          <span class="text-primary font-semibold">20</span>
-        </div>
-        <div class="flex justify-between items-center text-body-md font-body-md">
-          <span class="text-on-surface-variant">Contribution</span>
-          <span class="text-primary font-semibold">₱1,000 / month</span>
-        </div>
-        <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-          <div class="bg-secondary h-full w-[100%] rounded-full"></div>
-        </div>
-        <div class="flex justify-between items-center text-body-sm font-body-sm">
-          <span class="text-on-surface-variant">Fully Filled</span>
-          <span class="text-primary">Phase: Payout</span>
-        </div>
-      </div>
-      <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">Manage Details</button>
-    </div>
+    {
+      pools &&
+        pools.map((pool) => {
+          const status = pool.pool_statuses?.status_name || "Unknown";
+          const isForming = status.toLowerCase() === "forming";
+          const membersCount = pool.pool_members?.length || 0;
+          const fillPercentage = Math.min(
+            100,
+            Math.round((membersCount / pool.max_members) * 100),
+          );
+
+          return (
+            <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
+              <div class="flex justify-between items-start mb-lg">
+                <h4 class="font-headline-md text-headline-md text-primary truncate pr-2">
+                  {pool.pool_name}
+                </h4>
+                <span
+                  class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${
+                    isForming
+                      ? "bg-tertiary-fixed/30 text-tertiary-fixed-dim"
+                      : "bg-secondary/15 text-secondary"
+                  }`}
+                >
+                  {status}
+                </span>
+              </div>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center text-body-md font-body-md">
+                  <span class="text-on-surface-variant">Max Members</span>
+                  <span class="text-primary font-semibold">
+                    {pool.max_members}
+                  </span>
+                </div>
+                <div class="flex justify-between items-center text-body-md font-body-md">
+                  <span class="text-on-surface-variant">Contribution</span>
+                  <span class="text-primary font-semibold">
+                    {formatCurrency(pool.cycle_contribution_amount)}
+                  </span>
+                </div>
+                <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+                  <div
+                    class={`${isForming ? "bg-tertiary-fixed-dim" : "bg-secondary"} h-full rounded-full`}
+                    style={`width: ${fillPercentage}%`}
+                  />
+                </div>
+                <div class="flex justify-between items-center text-body-sm font-body-sm">
+                  <span class="text-on-surface-variant">
+                    {membersCount} of {pool.max_members} filled
+                  </span>
+                  <span class="text-primary">
+                    {isForming ? "Recruiting" : "In Progress"}
+                  </span>
+                </div>
+              </div>
+              <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
+                Manage Details
+              </button>
+            </div>
+          );
+        })
+    }
     <!-- New Pool Placeholder -->
-    <button class="p-lg rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center text-on-surface-variant hover:border-primary hover:text-primary transition-all group h-full bg-surface-container-low/30 min-h-[250px]" onclick="toggleModal('pool-modal')">
-      <span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
-      <span class="font-title-sm text-title-sm">Establish New Savings Group</span>
+    <button
+      class="p-lg rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center text-on-surface-variant hover:border-primary hover:text-primary transition-all group h-full bg-surface-container-low/30 min-h-[250px]"
+      onclick="toggleModal('pool-modal')"
+    >
+      <span
+        class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform"
+        >add_circle</span
+      >
+      <span class="font-title-sm text-title-sm"
+        >Establish New Savings Group</span
+      >
     </button>
   </div>
 
   <!-- Side Panel / Modal for Configuration -->
-  <div class="fixed inset-0 z-50 flex items-center justify-end invisible opacity-0 transition-all duration-300" id="pool-modal">
-    <div class="absolute inset-0 bg-[#00342b]/40 backdrop-blur-[4px]" onclick="toggleModal('pool-modal')"></div>
-    <div class="bg-white w-full max-w-lg h-full relative z-10 shadow-2xl p-xl flex flex-col transform translate-x-full transition-transform duration-300" id="modal-panel">
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-end invisible opacity-0 transition-all duration-300"
+    id="pool-modal"
+  >
+    <div
+      class="absolute inset-0 bg-[#00342b]/40 backdrop-blur-[4px]"
+      onclick="toggleModal('pool-modal')"
+    >
+    </div>
+    <div
+      class="bg-white w-full max-w-lg h-full relative z-10 shadow-2xl p-xl flex flex-col transform translate-x-full transition-transform duration-300"
+      id="modal-panel"
+    >
       <div class="flex justify-between items-center mb-xl">
-        <h3 class="font-display-lg text-display-lg text-primary">Configure New Pool</h3>
-        <button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors" onclick="toggleModal('pool-modal')">
+        <h3 class="font-display-lg text-display-lg text-primary">
+          Configure New Pool
+        </h3>
+        <button
+          class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors"
+          onclick="toggleModal('pool-modal')"
+        >
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
       <form class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-lg">
         <div>
-          <label class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2">Pool Name</label>
-          <input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md" placeholder="e.g. Mindanao Enterprise Group" type="text"/>
+          <label
+            class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
+            >Pool Name</label
+          >
+          <input
+            class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
+            placeholder="e.g. Mindanao Enterprise Group"
+            type="text"
+          />
         </div>
         <div class="grid grid-cols-2 gap-md">
           <div>
-            <label class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2">Total Payout Amount</label>
+            <label
+              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
+              >Total Payout Amount</label
+            >
             <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-primary">₱</span>
-              <input class="w-full pl-8 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md" placeholder="5,000" type="number"/>
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-primary"
+                >₱</span
+              >
+              <input
+                class="w-full pl-8 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
+                placeholder="5,000"
+                type="number"
+              />
             </div>
           </div>
           <div>
-            <label class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2">Cycle Contribution</label>
+            <label
+              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
+              >Cycle Contribution</label
+            >
             <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-primary">₱</span>
-              <input class="w-full pl-8 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md" placeholder="200" type="number"/>
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-primary"
+                >₱</span
+              >
+              <input
+                class="w-full pl-8 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
+                placeholder="200"
+                type="number"
+              />
             </div>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-md">
           <div>
-            <label class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2">Max Members</label>
-            <input class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md" type="number" value="10"/>
+            <label
+              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
+              >Max Members</label
+            >
+            <input
+              class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
+              type="number"
+              value="10"
+            />
           </div>
           <div>
-            <label class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2">Cycle Duration</label>
-            <select class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md bg-white">
+            <label
+              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
+              >Cycle Duration</label
+            >
+            <select
+              class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md bg-white"
+            >
               <option>Weekly</option>
               <option>Bi-Weekly</option>
               <option>Monthly</option>
             </select>
           </div>
         </div>
-        <div class="p-lg bg-surface-container-low rounded-xl border border-outline-variant/30 space-y-3 mt-4">
-          <p class="font-title-sm text-title-sm text-primary">Cycle Projections</p>
+        <div
+          class="p-lg bg-surface-container-low rounded-xl border border-outline-variant/30 space-y-3 mt-4"
+        >
+          <p class="font-title-sm text-title-sm text-primary">
+            Cycle Projections
+          </p>
           <div class="flex justify-between text-body-md">
             <span class="text-on-surface-variant">Total Duration</span>
             <span class="font-semibold">10 Weeks</span>
@@ -189,40 +323,53 @@ import AdminLayout from '../layouts/AdminLayout.astro';
           </div>
         </div>
         <div class="flex items-center gap-2 mt-4">
-          <input class="rounded border-outline-variant text-primary focus:ring-primary" id="terms" type="checkbox"/>
-          <label class="text-body-sm text-on-surface-variant" for="terms">I confirm that this pool follows the institutional compliance guidelines for micro-savings protocols.</label>
+          <input
+            class="rounded border-outline-variant text-primary focus:ring-primary"
+            id="terms"
+            type="checkbox"
+          />
+          <label class="text-body-sm text-on-surface-variant" for="terms"
+            >I confirm that this pool follows the institutional compliance
+            guidelines for micro-savings protocols.</label
+          >
         </div>
       </form>
       <div class="pt-xl flex gap-md border-t border-outline-variant/20 mt-auto">
-        <button class="flex-1 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-title-sm text-title-sm hover:bg-surface-container-low transition-colors" onclick="toggleModal('pool-modal')">Cancel</button>
-        <button class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-title-sm text-title-sm hover:opacity-90 transition-all shadow-sm">Save &amp; Initialize</button>
+        <button
+          class="flex-1 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-title-sm text-title-sm hover:bg-surface-container-low transition-colors"
+          onclick="toggleModal('pool-modal')">Cancel</button
+        >
+        <button
+          class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-title-sm text-title-sm hover:opacity-90 transition-all shadow-sm"
+          >Save &amp; Initialize</button
+        >
       </div>
     </div>
   </div>
 
   <script is:inline>
     // Making it global so onclick attribute works
-    window.toggleModal = function(id) {
-        const modal = document.getElementById(id);
-        const panel = document.getElementById('modal-panel');
-        
-        if (modal.classList.contains('invisible')) {
-            modal.classList.remove('invisible');
-            modal.classList.add('visible');
-            modal.classList.add('opacity-100');
-            panel.classList.remove('translate-x-full');
-            panel.classList.add('translate-x-0');
-            document.body.style.overflow = 'hidden';
-        } else {
-            panel.classList.remove('translate-x-0');
-            panel.classList.add('translate-x-full');
-            setTimeout(() => {
-                modal.classList.remove('visible');
-                modal.classList.add('invisible');
-                modal.classList.remove('opacity-100');
-                document.body.style.overflow = 'auto';
-            }, 300);
-        }
+    window.toggleModal = function (id) {
+      const modal = document.getElementById(id);
+      const panel = document.getElementById("modal-panel");
+
+      if (modal.classList.contains("invisible")) {
+        modal.classList.remove("invisible");
+        modal.classList.add("visible");
+        modal.classList.add("opacity-100");
+        panel.classList.remove("translate-x-full");
+        panel.classList.add("translate-x-0");
+        document.body.style.overflow = "hidden";
+      } else {
+        panel.classList.remove("translate-x-0");
+        panel.classList.add("translate-x-full");
+        setTimeout(() => {
+          modal.classList.remove("visible");
+          modal.classList.add("invisible");
+          modal.classList.remove("opacity-100");
+          document.body.style.overflow = "auto";
+        }, 300);
+      }
     };
   </script>
 </AdminLayout>

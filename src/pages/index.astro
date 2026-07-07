@@ -1,124 +1,236 @@
 ---
-import AdminLayout from '../layouts/AdminLayout.astro';
+import AdminLayout from "../layouts/AdminLayout.astro";
+import { getDashboardStats } from "../server/services/dashboardService";
+
+let activePoolsCount = 0;
+let totalTVL = 0;
+let usersCount = 0;
+let recentActivity: any[] = [];
+
+try {
+  const stats = await getDashboardStats();
+  activePoolsCount = stats.activePoolsCount;
+  totalTVL = stats.totalTVL;
+  usersCount = stats.usersCount;
+  recentActivity = stats.recentActivity;
+} catch (e) {
+  console.error("Failed to fetch dashboard stats", e);
+}
+
+const formattedTVL = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+}).format(totalTVL);
 ---
 
-<AdminLayout title="CSMP - Overview Dashboard" pageTitle="Overview Dashboard" currentPath="/">
+<AdminLayout
+  title="CSMP - Overview Dashboard"
+  pageTitle="Overview Dashboard"
+  currentPath="/"
+>
   <!-- METRIC CARDS -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
     <!-- TVL Card -->
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200">
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200"
+    >
       <div class="flex justify-between items-start mb-4">
-        <span class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg">payments</span>
-        <span class="text-secondary text-sm font-bold flex items-center">+4.2% <span class="material-symbols-outlined text-xs">arrow_upward</span></span>
+        <span
+          class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg"
+          >payments</span
+        >
+        <span class="text-secondary text-sm font-bold flex items-center"
+          >+4.2% <span class="material-symbols-outlined text-xs"
+            >arrow_upward</span
+          ></span
+        >
       </div>
-      <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Total Value Locked</p>
-      <h3 class="font-display-lg text-display-lg text-primary tracking-tight">₱ 540,000</h3>
+      <p
+        class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1"
+      >
+        Total Value Locked
+      </p>
+      <h3 class="font-display-lg text-display-lg text-primary tracking-tight">
+        {formattedTVL}
+      </h3>
     </div>
     <!-- Active Pools Card -->
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200">
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200"
+    >
       <div class="flex justify-between items-start mb-4">
-        <span class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg">account_balance_wallet</span>
+        <span
+          class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg"
+          >account_balance_wallet</span
+        >
         <span class="text-on-surface-variant text-sm font-bold">Stable</span>
       </div>
-      <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Active Pools</p>
-      <h3 class="font-display-lg text-display-lg text-primary tracking-tight">24</h3>
+      <p
+        class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1"
+      >
+        Active Pools
+      </p>
+      <h3 class="font-display-lg text-display-lg text-primary tracking-tight">
+        {activePoolsCount}
+      </h3>
     </div>
     <!-- Total Users Card -->
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200">
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200"
+    >
       <div class="flex justify-between items-start mb-4">
-        <span class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg">group</span>
-        <span class="text-secondary text-sm font-bold flex items-center">+12 <span class="material-symbols-outlined text-xs">person_add</span></span>
+        <span
+          class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg"
+          >group</span
+        >
+        <span class="text-secondary text-sm font-bold flex items-center"
+          >+12 <span class="material-symbols-outlined text-xs">person_add</span
+          ></span
+        >
       </div>
-      <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Total Users</p>
-      <h3 class="font-display-lg text-display-lg text-primary tracking-tight">156</h3>
+      <p
+        class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1"
+      >
+        Total Users
+      </p>
+      <h3 class="font-display-lg text-display-lg text-primary tracking-tight">
+        {usersCount || 0}
+      </h3>
     </div>
     <!-- Default Rate Card -->
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200">
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl group hover:scale-[1.01] transition-transform duration-200"
+    >
       <div class="flex justify-between items-start mb-4">
-        <span class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg">monitoring</span>
-        <span class="text-error text-sm font-bold flex items-center">-0.3% <span class="material-symbols-outlined text-xs">arrow_downward</span></span>
+        <span
+          class="material-symbols-outlined text-primary-container p-2 bg-primary-fixed rounded-lg"
+          >monitoring</span
+        >
+        <span class="text-error text-sm font-bold flex items-center"
+          >-0.3% <span class="material-symbols-outlined text-xs"
+            >arrow_downward</span
+          ></span
+        >
       </div>
-      <p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1">Default Rate</p>
-      <h3 class="font-display-lg text-display-lg text-secondary-container tracking-tight" style="color: #69ff87;">1.2%</h3>
+      <p
+        class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-1"
+      >
+        Default Rate
+      </p>
+      <h3
+        class="font-display-lg text-display-lg text-secondary-container tracking-tight"
+        style="color: #69ff87;"
+      >
+        1.2%
+      </h3>
     </div>
   </div>
 
   <!-- MAIN GRID SECTION -->
   <div class="grid grid-cols-12 gap-gutter">
     <!-- ACTIVITY TABLE (Left 8 Columns) -->
-    <div class="col-span-12 lg:col-span-8 bg-white border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl overflow-hidden flex flex-col">
-      <div class="px-lg py-4 border-b border-surface-container-highest flex justify-between items-center bg-surface-container-low">
-        <h4 class="font-headline-md text-headline-md text-primary">Recent Activity</h4>
-        <button class="text-primary text-sm font-bold hover:underline">View All Report</button>
+    <div
+      class="col-span-12 lg:col-span-8 bg-white border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl overflow-hidden flex flex-col"
+    >
+      <div
+        class="px-lg py-4 border-b border-surface-container-highest flex justify-between items-center bg-surface-container-low"
+      >
+        <h4 class="font-headline-md text-headline-md text-primary">
+          Recent Activity
+        </h4>
+        <button class="text-primary text-sm font-bold hover:underline"
+          >View All Report</button
+        >
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-lowest">
-              <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Activity Type</th>
-              <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Pool Name</th>
-              <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Amount</th>
-              <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Date</th>
-              <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Status</th>
+              <th
+                class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest"
+                >Activity Type</th
+              >
+              <th
+                class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest"
+                >Pool Name</th
+              >
+              <th
+                class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest"
+                >Amount</th
+              >
+              <th
+                class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest"
+                >Date</th
+              >
+              <th
+                class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest"
+                >Status</th
+              >
             </tr>
           </thead>
           <tbody class="divide-y divide-surface-container-highest">
-            <tr class="hover:bg-[#F0F4F3] transition-colors group">
-              <td class="px-lg py-4">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-secondary text-[18px]">outbox</span>
-                  <span class="text-body-md font-medium text-on-surface">Pool Payout</span>
-                </div>
-              </td>
-              <td class="px-lg py-4 text-body-md text-on-surface-variant">Agri-Growth Davao</td>
-              <td class="px-lg py-4 font-code-mono text-primary font-bold">₱ 45,000.00</td>
-              <td class="px-lg py-4 text-body-sm text-on-surface-variant">Oct 24, 2023</td>
-              <td class="px-lg py-4">
-                <span class="px-2 py-1 bg-secondary-container/15 text-on-secondary-container text-[11px] font-bold rounded-full uppercase tracking-tighter">Completed</span>
-              </td>
-            </tr>
-            <tr class="hover:bg-[#F0F4F3] transition-colors">
-              <td class="px-lg py-4">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-primary-container text-[18px]">account_balance</span>
-                  <span class="text-body-md font-medium text-on-surface">Loan Disburs.</span>
-                </div>
-              </td>
-              <td class="px-lg py-4 text-body-md text-on-surface-variant">Metro-Retail Micro</td>
-              <td class="px-lg py-4 font-code-mono text-primary font-bold">₱ 12,500.00</td>
-              <td class="px-lg py-4 text-body-sm text-on-surface-variant">Oct 23, 2023</td>
-              <td class="px-lg py-4">
-                <span class="px-2 py-1 bg-secondary-container/15 text-on-secondary-container text-[11px] font-bold rounded-full uppercase tracking-tighter">Completed</span>
-              </td>
-            </tr>
-            <tr class="hover:bg-[#F0F4F3] transition-colors">
-              <td class="px-lg py-4">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-primary-container text-[18px]">outbox</span>
-                  <span class="text-body-md font-medium text-on-surface">Pool Payout</span>
-                </div>
-              </td>
-              <td class="px-lg py-4 text-body-md text-on-surface-variant">Fishery Dev Cebu</td>
-              <td class="px-lg py-4 font-code-mono text-primary font-bold">₱ 30,000.00</td>
-              <td class="px-lg py-4 text-body-sm text-on-surface-variant">Oct 22, 2023</td>
-              <td class="px-lg py-4">
-                <span class="px-2 py-1 bg-tertiary-container/15 text-on-tertiary-container text-[11px] font-bold rounded-full uppercase tracking-tighter">Processing</span>
-              </td>
-            </tr>
-            <tr class="hover:bg-[#F0F4F3] transition-colors">
-              <td class="px-lg py-4">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-primary-container text-[18px]">account_balance</span>
-                  <span class="text-body-md font-medium text-on-surface">Loan Disburs.</span>
-                </div>
-              </td>
-              <td class="px-lg py-4 text-body-md text-on-surface-variant">Small-Biz Support</td>
-              <td class="px-lg py-4 font-code-mono text-primary font-bold">₱ 8,200.00</td>
-              <td class="px-lg py-4 text-body-sm text-on-surface-variant">Oct 21, 2023</td>
-              <td class="px-lg py-4">
-                <span class="px-2 py-1 bg-secondary-container/15 text-on-secondary-container text-[11px] font-bold rounded-full uppercase tracking-tighter">Completed</span>
-              </td>
-            </tr>
+            {
+              recentActivity && recentActivity.length > 0 ? (
+                recentActivity.map((activity) => (
+                  <tr class="hover:bg-[#F0F4F3] transition-colors group">
+                    <td class="px-lg py-4">
+                      <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-secondary text-[18px]">
+                          {(activity.transaction_types as any)?.type_name
+                            ?.toLowerCase()
+                            .includes("payout")
+                            ? "outbox"
+                            : "account_balance"}
+                        </span>
+                        <span class="text-body-md font-medium text-on-surface">
+                          {(activity.transaction_types as any)?.type_name ||
+                            "Transaction"}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-lg py-4 text-body-md text-on-surface-variant">
+                      {(activity.pool_members as any)?.pools?.pool_name ||
+                        "Unknown Pool"}
+                    </td>
+                    <td class="px-lg py-4 font-code-mono text-primary font-bold">
+                      {new Intl.NumberFormat("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      }).format(activity.amount)}
+                    </td>
+                    <td class="px-lg py-4 text-body-sm text-on-surface-variant">
+                      {new Date(activity.executed_at).toLocaleDateString(
+                        "en-US",
+                        { month: "short", day: "numeric", year: "numeric" },
+                      )}
+                    </td>
+                    <td class="px-lg py-4">
+                      <span
+                        class={`px-2 py-1 text-[11px] font-bold rounded-full uppercase tracking-tighter ${
+                          (
+                            activity.transaction_statuses as any
+                          )?.status_name?.toLowerCase() === "completed"
+                            ? "bg-secondary-container/15 text-on-secondary-container"
+                            : "bg-tertiary-container/15 text-on-tertiary-container"
+                        }`}
+                      >
+                        {(activity.transaction_statuses as any)?.status_name ||
+                          "Processing"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colspan="5"
+                    class="px-lg py-8 text-center text-on-surface-variant"
+                  >
+                    No recent activity found.
+                  </td>
+                </tr>
+              )
+            }
           </tbody>
         </table>
       </div>
@@ -126,16 +238,25 @@ import AdminLayout from '../layouts/AdminLayout.astro';
     <!-- RIGHT PANEL: ASYMMETRIC VISUAL (Right 4 Columns) -->
     <div class="col-span-12 lg:col-span-4 space-y-gutter">
       <!-- Protocol Performance Visualization -->
-      <div class="bg-primary rounded-xl p-lg text-on-primary h-64 relative overflow-hidden group">
+      <div
+        class="bg-primary rounded-xl p-lg text-on-primary h-64 relative overflow-hidden group"
+      >
         <div class="absolute inset-0 opacity-20 pointer-events-none"></div>
         <div class="relative z-10 h-full flex flex-col justify-between">
           <div>
-            <h4 class="font-headline-md text-headline-md mb-2">Protocol Health</h4>
-            <p class="text-on-primary/60 text-body-md max-w-[200px]">Real-time audit of liquidity pools and disbursement safety.</p>
+            <h4 class="font-headline-md text-headline-md mb-2">
+              Protocol Health
+            </h4>
+            <p class="text-on-primary/60 text-body-md max-w-[200px]">
+              Real-time audit of liquidity pools and disbursement safety.
+            </p>
           </div>
           <div class="space-y-4">
             <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-              <div class="bg-secondary-fixed h-full w-[88%] rounded-full shadow-[0_0_8px_rgba(105,255,135,0.5)]"></div>
+              <div
+                class="bg-secondary-fixed h-full w-[88%] rounded-full shadow-[0_0_8px_rgba(105,255,135,0.5)]"
+              >
+              </div>
             </div>
             <div class="flex justify-between items-center text-label-caps">
               <span>LIQUIDITY SCORE</span>
@@ -145,15 +266,33 @@ import AdminLayout from '../layouts/AdminLayout.astro';
         </div>
       </div>
       <!-- Map/Location Context -->
-      <div class="bg-white border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl p-lg">
+      <div
+        class="bg-white border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl p-lg"
+      >
         <div class="flex items-center justify-between mb-4">
-          <h4 class="font-title-sm text-title-sm text-primary">Active Disbursement Areas</h4>
-          <span class="material-symbols-outlined text-on-surface-variant">location_on</span>
+          <h4 class="font-title-sm text-title-sm text-primary">
+            Active Disbursement Areas
+          </h4>
+          <span class="material-symbols-outlined text-on-surface-variant"
+            >location_on</span
+          >
         </div>
-        <div class="relative w-full h-40 rounded-lg overflow-hidden border border-outline-variant/20">
-          <img class="w-full h-full object-cover grayscale opacity-70" alt="Map view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3Oj6DbyMoJztNFeO0NO-VCdMGj3ypmIpzcM1itoPsQRx0qu3zWSpMRTnRed1fPT40RjEDvl9uIQQM8FztrE1DJ1TOIaRJGol-syDegRtH-gskmA8K2g2aZSoALJw6bcfROSZdpy9yZQ4Kb-yZpetpnATIEyKc7xchvEAl2ubIJdPvdvbvoJ9fToXBNeExhCRuJbwVV6T2p4wSTlIaWpuBQY0W3_RKHEJ6YJnjIE3wbdqnZIdoDAxu"/>
-          <div class="absolute inset-0 bg-primary/10 flex items-center justify-center">
-            <div class="bg-white/90 backdrop-blur-sm px-3 py-1 rounded text-[11px] font-bold text-primary shadow-sm">VIEW HEATMAP</div>
+        <div
+          class="relative w-full h-40 rounded-lg overflow-hidden border border-outline-variant/20"
+        >
+          <img
+            class="w-full h-full object-cover grayscale opacity-70"
+            alt="Map view"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3Oj6DbyMoJztNFeO0NO-VCdMGj3ypmIpzcM1itoPsQRx0qu3zWSpMRTnRed1fPT40RjEDvl9uIQQM8FztrE1DJ1TOIaRJGol-syDegRtH-gskmA8K2g2aZSoALJw6bcfROSZdpy9yZQ4Kb-yZpetpnATIEyKc7xchvEAl2ubIJdPvdvbvoJ9fToXBNeExhCRuJbwVV6T2p4wSTlIaWpuBQY0W3_RKHEJ6YJnjIE3wbdqnZIdoDAxu"
+          />
+          <div
+            class="absolute inset-0 bg-primary/10 flex items-center justify-center"
+          >
+            <div
+              class="bg-white/90 backdrop-blur-sm px-3 py-1 rounded text-[11px] font-bold text-primary shadow-sm"
+            >
+              VIEW HEATMAP
+            </div>
           </div>
         </div>
       </div>
@@ -162,30 +301,58 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 
   <!-- BENTO STYLE CARDS BOTTOM SECTION -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-tertiary/10 flex items-center justify-center">
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl flex items-center gap-4"
+    >
+      <div
+        class="w-12 h-12 rounded bg-tertiary/10 flex items-center justify-center"
+      >
         <span class="material-symbols-outlined text-tertiary">warning</span>
       </div>
       <div>
-        <p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Pending Reviews</p>
+        <p
+          class="font-label-caps text-label-caps text-on-surface-variant uppercase"
+        >
+          Pending Reviews
+        </p>
         <h4 class="font-headline-md text-headline-md text-primary">08 Pools</h4>
       </div>
     </div>
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-secondary/10 flex items-center justify-center">
-        <span class="material-symbols-outlined text-secondary">verified_user</span>
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl flex items-center gap-4"
+    >
+      <div
+        class="w-12 h-12 rounded bg-secondary/10 flex items-center justify-center"
+      >
+        <span class="material-symbols-outlined text-secondary"
+          >verified_user</span
+        >
       </div>
       <div>
-        <p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Verified Agents</p>
-        <h4 class="font-headline-md text-headline-md text-primary">42 Agents</h4>
+        <p
+          class="font-label-caps text-label-caps text-on-surface-variant uppercase"
+        >
+          Verified Agents
+        </p>
+        <h4 class="font-headline-md text-headline-md text-primary">
+          42 Agents
+        </h4>
       </div>
     </div>
-    <div class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl flex items-center gap-4">
-      <div class="w-12 h-12 rounded bg-primary/10 flex items-center justify-center">
+    <div
+      class="bg-white p-lg border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl flex items-center gap-4"
+    >
+      <div
+        class="w-12 h-12 rounded bg-primary/10 flex items-center justify-center"
+      >
         <span class="material-symbols-outlined text-primary">receipt_long</span>
       </div>
       <div>
-        <p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Month Disbursements</p>
+        <p
+          class="font-label-caps text-label-caps text-on-surface-variant uppercase"
+        >
+          Month Disbursements
+        </p>
         <h4 class="font-headline-md text-headline-md text-primary">₱ 1.2M</h4>
       </div>
     </div>
@@ -193,14 +360,14 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 
   <script>
     // Micro-interactions for table rows
-    document.querySelectorAll('tbody tr').forEach(row => {
-        row.addEventListener('mouseenter', () => {
-            (row as HTMLElement).style.transform = 'translateX(4px)';
-            (row as HTMLElement).style.transition = 'transform 0.2s ease-out';
-        });
-        row.addEventListener('mouseleave', () => {
-            (row as HTMLElement).style.transform = 'translateX(0)';
-        });
+    document.querySelectorAll("tbody tr").forEach((row) => {
+      row.addEventListener("mouseenter", () => {
+        (row as HTMLElement).style.transform = "translateX(4px)";
+        (row as HTMLElement).style.transition = "transform 0.2s ease-out";
+      });
+      row.addEventListener("mouseleave", () => {
+        (row as HTMLElement).style.transform = "translateX(0)";
+      });
     });
   </script>
 </AdminLayout>

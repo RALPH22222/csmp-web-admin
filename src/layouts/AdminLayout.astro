@@ -12,13 +12,6 @@ const { title = "CSMP Admin", pageTitle = "Overview Dashboard", currentPath = "/
 
 <Layout title={title} bodyClass="flex min-h-screen text-on-surface">
 	<Fragment slot="head">
-		<!-- Auth Check Script (Mock) -->
-		<script is:inline>
-			// If no mock token is found, redirect to login page immediately
-			if (typeof window !== 'undefined' && !localStorage.getItem('csmp_auth_token')) {
-				window.location.href = '/login';
-			}
-		</script>
 	</Fragment>
 	<!-- SIDE BAR NAVIGATION -->
 	<aside class="w-[260px] h-screen fixed left-0 top-0 bg-primary border-r border-outline-variant/10 flex flex-col py-lg z-50">
@@ -89,12 +82,12 @@ const { title = "CSMP Admin", pageTitle = "Overview Dashboard", currentPath = "/
 					<span class="material-symbols-outlined">help_outline</span>
 				</button>
 				<div class="h-8 w-[1px] bg-outline-variant/30 mx-1"></div>
-				<div class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors" onclick="localStorage.removeItem('csmp_auth_token'); window.location.href = '/login';">
+				<a href="/api/auth/logout" class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
 					<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center">
 						<span class="material-symbols-outlined text-secondary text-[20px]">account_circle</span>
 					</div>
 					<span class="material-symbols-outlined text-on-surface-variant text-[18px]">logout</span>
-				</div>
+				</a>
 			</div>
 		</header>
 

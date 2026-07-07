@@ -6,6 +6,13 @@ let activePoolsCount = 0;
 let totalTVL = 0;
 let usersCount = 0;
 let recentActivity: any[] = [];
+let userAddresses: string[] = [];
+
+// Future backend variables to wire up
+let liquidityScore = 0;
+let pendingPoolsCount = 0;
+let verifiedAgentsCount = 0;
+let monthlyDisbursements = 0;
 
 try {
   const stats = await getDashboardStats();
@@ -13,6 +20,12 @@ try {
   totalTVL = stats.totalTVL;
   usersCount = stats.usersCount;
   recentActivity = stats.recentActivity;
+  userAddresses = stats.addresses || [];
+  
+  liquidityScore = stats.liquidityScore;
+  pendingPoolsCount = stats.pendingPoolsCount;
+  verifiedAgentsCount = stats.verifiedAgentsCount;
+  monthlyDisbursements = stats.monthlyDisbursements;
 } catch (e) {
   console.error("Failed to fetch dashboard stats", e);
 }
@@ -28,6 +41,19 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
   pageTitle="Overview Dashboard"
   currentPath="/"
 >
+  <Fragment slot="head">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <style>
+      .neon-marker {
+        background-color: #69FF87;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #69FF87, 0 0 20px #69FF87;
+        opacity: 0.8;
+      }
+    </style>
+  </Fragment>
+
   <!-- METRIC CARDS -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
     <!-- TVL Card -->
@@ -260,7 +286,7 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
             </div>
             <div class="flex justify-between items-center text-label-caps">
               <span>LIQUIDITY SCORE</span>
-              <span class="text-secondary-fixed font-bold">88/100</span>
+              <span class="text-secondary-fixed font-bold">{liquidityScore}/100</span>
             </div>
           </div>
         </div>
@@ -280,13 +306,9 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         <div
           class="relative w-full h-40 rounded-lg overflow-hidden border border-outline-variant/20"
         >
-          <img
-            class="w-full h-full object-cover grayscale opacity-70"
-            alt="Map view"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3Oj6DbyMoJztNFeO0NO-VCdMGj3ypmIpzcM1itoPsQRx0qu3zWSpMRTnRed1fPT40RjEDvl9uIQQM8FztrE1DJ1TOIaRJGol-syDegRtH-gskmA8K2g2aZSoALJw6bcfROSZdpy9yZQ4Kb-yZpetpnATIEyKc7xchvEAl2ubIJdPvdvbvoJ9fToXBNeExhCRuJbwVV6T2p4wSTlIaWpuBQY0W3_RKHEJ6YJnjIE3wbdqnZIdoDAxu"
-          />
+          <div id="philippines-map" class="w-full h-full z-10"></div>
           <div
-            class="absolute inset-0 bg-primary/10 flex items-center justify-center"
+            class="absolute inset-0 bg-primary/10 flex items-center justify-center pointer-events-none z-20"
           >
             <div
               class="bg-white/90 backdrop-blur-sm px-3 py-1 rounded text-[11px] font-bold text-primary shadow-sm"
@@ -310,12 +332,10 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         <span class="material-symbols-outlined text-tertiary">warning</span>
       </div>
       <div>
-        <p
-          class="font-label-caps text-label-caps text-on-surface-variant uppercase"
-        >
+        <p class="font-label-caps text-label-caps text-on-surface-variant uppercase">
           Pending Reviews
         </p>
-        <h4 class="font-headline-md text-headline-md text-primary">08 Pools</h4>
+        <h4 class="font-headline-md text-headline-md text-primary">{pendingPoolsCount} Pools</h4>
       </div>
     </div>
     <div
@@ -329,13 +349,11 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         >
       </div>
       <div>
-        <p
-          class="font-label-caps text-label-caps text-on-surface-variant uppercase"
-        >
+        <p class="font-label-caps text-label-caps text-on-surface-variant uppercase">
           Verified Agents
         </p>
         <h4 class="font-headline-md text-headline-md text-primary">
-          42 Agents
+          {verifiedAgentsCount} Agents
         </h4>
       </div>
     </div>
@@ -348,26 +366,86 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         <span class="material-symbols-outlined text-primary">receipt_long</span>
       </div>
       <div>
-        <p
-          class="font-label-caps text-label-caps text-on-surface-variant uppercase"
-        >
+        <p class="font-label-caps text-label-caps text-on-surface-variant uppercase">
           Month Disbursements
         </p>
-        <h4 class="font-headline-md text-headline-md text-primary">₱ 1.2M</h4>
+        <h4 class="font-headline-md text-headline-md text-primary">₱ {monthlyDisbursements.toLocaleString()}</h4>
       </div>
     </div>
   </div>
 
-  <script>
+  <script is:inline define:vars={{ userAddresses }}>
     // Micro-interactions for table rows
     document.querySelectorAll("tbody tr").forEach((row) => {
       row.addEventListener("mouseenter", () => {
-        (row as HTMLElement).style.transform = "translateX(4px)";
-        (row as HTMLElement).style.transition = "transform 0.2s ease-out";
+        row.style.transform = "translateX(4px)";
+        row.style.transition = "transform 0.2s ease-out";
       });
       row.addEventListener("mouseleave", () => {
-        (row as HTMLElement).style.transform = "translateX(0)";
+        row.style.transform = "translateX(0)";
       });
     });
+
+    // Leaflet Map Initialization
+    if (typeof L !== 'undefined') {
+      const map = L.map('philippines-map', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([12.8797, 121.7740], 5); // Center on Philippines
+
+      // Dark mode map tiles
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 20
+      }).addTo(map);
+
+      // Disable dragging and zooming for a static dashboard aesthetic
+      map.dragging.disable();
+      map.touchZoom.disable();
+      map.doubleClickZoom.disable();
+      map.scrollWheelZoom.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+
+      // Dictionary to map address string matches to coordinates
+      const cityCoords = {
+        'manila': [14.5995, 120.9842],
+        'cebu': [10.3157, 123.8854],
+        'davao': [7.1907, 125.4553],
+        'quezon': [14.6760, 121.0437],
+        'makati': [14.5547, 121.0244],
+        'taguig': [14.5176, 121.0509],
+        'pasig': [14.5764, 121.0851],
+        'zamboanga': [6.9214, 122.0790],
+        'cagayan de oro': [8.4542, 124.6319],
+        'iloilo': [10.7202, 122.5621],
+        'bacolod': [10.6650, 122.9498]
+      };
+
+      const customIcon = L.divIcon({
+        className: 'neon-marker',
+        iconSize: [8, 8]
+      });
+
+      // Plot dynamic addresses
+      userAddresses.forEach(address => {
+        const addrLower = address.toLowerCase();
+        let coords = [12.8797, 121.7740]; // Default PH center
+        
+        // Find if address matches a known city
+        for (const [city, cityCoord] of Object.entries(cityCoords)) {
+          if (addrLower.includes(city)) {
+            coords = [...cityCoord];
+            break;
+          }
+        }
+        
+        // Randomize slightly so markers don't overlap completely
+        const offsetLat = (Math.random() - 0.5) * 0.1;
+        const offsetLng = (Math.random() - 0.5) * 0.1;
+        
+        L.marker([coords[0] + offsetLat, coords[1] + offsetLng], { icon: customIcon }).addTo(map);
+      });
+    }
   </script>
 </AdminLayout>

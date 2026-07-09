@@ -144,8 +144,13 @@ const formatCurrency = (val: number) =>
         institutionalPools.map((pool) => {
           const status = pool.pool_statuses?.status_name || "Unknown";
           const isForming = status.toLowerCase() === "forming";
+          const isPendingApproval = status.toLowerCase() === "pending_approval" || status.toLowerCase() === "pending";
           const membersCount = pool.pool_members?.length || 0;
           const fillPercentage = Math.min(100, Math.round((membersCount / pool.max_members) * 100) || 0);
+          
+          let statusBadgeClass = "bg-secondary/15 text-secondary";
+          if (isForming) statusBadgeClass = "bg-tertiary-fixed/30 text-tertiary-fixed-dim";
+          if (isPendingApproval) statusBadgeClass = "bg-orange-100 text-orange-700";
 
           return (
             <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
@@ -153,8 +158,8 @@ const formatCurrency = (val: number) =>
                 <h4 class="font-headline-md text-headline-md text-primary truncate pr-2">
                   {pool.pool_name}
                 </h4>
-                <span class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${isForming ? "bg-tertiary-fixed/30 text-tertiary-fixed-dim" : "bg-secondary/15 text-secondary"}`}>
-                  {status}
+                <span class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${statusBadgeClass}`}>
+                  {isPendingApproval ? 'PENDING' : status.replace('_', ' ')}
                 </span>
               </div>
               <div class="space-y-4">
@@ -183,12 +188,20 @@ const formatCurrency = (val: number) =>
     }
   </div>
 
-  <div class="mb-4 mt-8 flex items-center justify-between border-t border-outline-variant/20 pt-8">
+  <div class="mb-4 mt-8 flex flex-col lg:flex-row lg:items-center justify-between border-t border-outline-variant/20 pt-8 gap-4">
     <div>
       <h3 class="font-headline-md text-headline-md text-primary">Citizen Pools</h3>
       <p class="text-on-surface-variant text-body-sm">Created by verified agents and citizens.</p>
     </div>
-    <span class="text-body-sm text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full">{citizenPools.length} Pools</span>
+    
+    <div class="flex items-center bg-surface-container-low p-1 rounded-lg overflow-x-auto">
+      <button onclick="filterCitizenPools('all', this)" class="citizen-tab-btn active px-4 py-1.5 rounded-md text-sm font-medium bg-white text-primary shadow-sm transition-all whitespace-nowrap">All</button>
+      <button onclick="filterCitizenPools('pending', this)" class="citizen-tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Pending Approval</button>
+      <button onclick="filterCitizenPools('forming', this)" class="citizen-tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Forming</button>
+      <button onclick="filterCitizenPools('active', this)" class="citizen-tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Active</button>
+      <button onclick="filterCitizenPools('completed', this)" class="citizen-tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Completed</button>
+      <button onclick="filterCitizenPools('cancelled', this)" class="citizen-tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all whitespace-nowrap">Cancelled</button>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
@@ -197,19 +210,32 @@ const formatCurrency = (val: number) =>
         citizenPools.map((pool) => {
           const status = pool.pool_statuses?.status_name || "Unknown";
           const isForming = status.toLowerCase() === "forming";
+          const isPendingApproval = status.toLowerCase() === "pending_approval" || status.toLowerCase() === "pending";
           const membersCount = pool.pool_members?.length || 0;
           const fillPercentage = Math.min(100, Math.round((membersCount / pool.max_members) * 100) || 0);
+          
+          const orgFirst = pool.users?.first_name || '';
+          const orgLast = pool.users?.last_name || '';
+          const orgName = [orgFirst, orgLast].filter(Boolean).join(' ') || 'Citizen';
+
+          let statusBadgeClass = "bg-secondary/15 text-secondary";
+          if (isForming) statusBadgeClass = "bg-tertiary-fixed/30 text-tertiary-fixed-dim";
+          if (isPendingApproval) statusBadgeClass = "bg-orange-100 text-orange-700";
 
           return (
-            <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
-              <div class="flex justify-between items-start mb-lg">
+            <div class="citizen-pool-card bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group" data-status={isPendingApproval ? 'pending' : status.toLowerCase()}>
+              <div class="flex justify-between items-start mb-2">
                 <h4 class="font-headline-md text-headline-md text-primary truncate pr-2">
                   {pool.pool_name}
                 </h4>
-                <span class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${isForming ? "bg-tertiary-fixed/30 text-tertiary-fixed-dim" : "bg-secondary/15 text-secondary"}`}>
-                  {status}
+                <span class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${statusBadgeClass}`}>
+                  {isPendingApproval ? 'PENDING' : status.replace('_', ' ')}
                 </span>
               </div>
+              <p class="text-[11px] text-on-surface-variant mb-lg uppercase tracking-widest flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">person</span>
+                Created by {orgName}
+              </p>
               <div class="space-y-4">
                 <div class="flex justify-between items-center text-body-md font-body-md">
                   <span class="text-on-surface-variant">Max Members</span>
@@ -224,93 +250,173 @@ const formatCurrency = (val: number) =>
                 </div>
                 <div class="flex justify-between items-center text-body-sm font-body-sm">
                   <span class="text-on-surface-variant">{membersCount} of {pool.max_members} filled</span>
-                  <span class="text-primary">{isForming ? "Recruiting" : "In Progress"}</span>
+                  <span class="text-primary">{isPendingApproval ? "Waiting for Approval" : (isForming ? "Recruiting" : "In Progress")}</span>
                 </div>
               </div>
+              
               <button data-pool={JSON.stringify(pool)} onclick="window.openPoolDrawer(JSON.parse(this.dataset.pool))" class="manage-details-btn w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
                 Manage Details
               </button>
+              
+              {isPendingApproval && (
+                <div class="flex gap-2 mt-2">
+                  <button data-pool={pool.id} onclick="window.approvePool(this.dataset.pool)" class="w-1/2 py-2 rounded-lg bg-primary text-white font-title-sm text-title-sm hover:bg-primary/90 transition-colors">
+                    Approve
+                  </button>
+                  <button data-pool={pool.id} onclick="window.rejectPool(this.dataset.pool)" class="w-1/2 py-2 rounded-lg border border-red-500 text-red-500 font-title-sm text-title-sm hover:bg-red-50 transition-colors">
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
           );
         })
       :
-      <div class="col-span-full py-xl text-center border-2 border-dashed border-outline-variant/50 rounded-xl bg-surface-container-low/30">
+      <div id="citizen-empty-state" class="col-span-full py-xl text-center border-2 border-dashed border-outline-variant/50 rounded-xl bg-surface-container-low/30">
         <span class="material-symbols-outlined text-4xl text-on-surface-variant/50 mb-2">sentiment_dissatisfied</span>
-        <p class="text-on-surface-variant font-body-md">No citizen pools have been created yet.</p>
+        <p class="text-on-surface-variant font-body-md">No citizen pools found for this category.</p>
       </div>
     }
   </div>
 
-  <!-- Side Drawer UI -->
-  <div id="pool-drawer-overlay" onclick="closePoolDrawer()" class="fixed inset-0 bg-black/50 hidden opacity-0 transition-opacity duration-300 cursor-pointer" style="z-index: 99998;"></div>
-  
-  <div id="pool-drawer" class="fixed top-0 right-0 h-screen w-full max-w-md bg-surface transition-transform duration-300 shadow-2xl flex flex-col" style="z-index: 99999; transform: translateX(100%);">
-    <!-- Drawer Header -->
-    <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-lowest">
-      <div>
-        <h3 id="drawer-pool-name" class="font-headline-sm text-headline-sm text-primary">Pool Name</h3>
-        <p id="drawer-pool-status" class="text-label-sm text-on-surface-variant font-label-sm uppercase tracking-widest mt-1">Status</p>
-      </div>
-      <button onclick="closePoolDrawer()" class="p-2 hover:bg-surface-container-highest text-on-surface-variant rounded-full transition-colors flex items-center justify-center">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-    
-    <!-- Drawer Content -->
-    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-surface">
-      <!-- Progress Bar -->
-      <div>
-         <div class="flex justify-between items-center text-body-sm font-body-sm mb-2">
-            <span class="text-on-surface-variant">Capacity</span>
-            <span id="drawer-capacity-text" class="text-primary font-semibold">0 / 0 filled</span>
-         </div>
-         <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-            <div id="drawer-capacity-bar" class="bg-secondary h-full rounded-full transition-all duration-500" style="width: 0%"></div>
-         </div>
-      </div>
-
-      <!-- Stats Row -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-surface-container-lowest border border-outline-variant/30 p-4 rounded-xl shadow-sm">
-          <p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Current Cycle</p>
-          <p id="drawer-current-cycle" class="font-title-lg text-primary">--</p>
-        </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/30 p-4 rounded-xl shadow-sm">
-          <p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Next Payout</p>
-          <p id="drawer-next-payout" class="font-title-lg text-secondary">--</p>
-        </div>
-      </div>
-      
-      <!-- Members List -->
-      <div>
-        <h4 class="font-title-md text-primary mb-4 flex items-center gap-2 pb-2 border-b border-outline-variant/20">
-          <span class="material-symbols-outlined text-secondary text-sm">group</span>
-          Members & Tracking
-        </h4>
-        <div id="drawer-members-list" class="space-y-3">
-          <!-- Injected via JS -->
-        </div>
-      </div>
-    </div>
-  </div>
 
   <script is:inline>
-    // Drawer Logic
+    window.filterCitizenPools = function(status, btnElement) {
+      // Update active tab styling
+      document.querySelectorAll('.citizen-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-primary', 'shadow-sm');
+        btn.classList.add('text-on-surface-variant');
+      });
+      btnElement.classList.add('bg-white', 'text-primary', 'shadow-sm');
+      btnElement.classList.remove('text-on-surface-variant');
+
+      // Filter cards
+      const cards = document.querySelectorAll('.citizen-pool-card');
+      let visibleCount = 0;
+      cards.forEach(card => {
+        if (status === 'all' || card.dataset.status === status) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      
+      // Show/Hide empty state
+      const emptyState = document.getElementById('citizen-empty-state');
+      if (emptyState) {
+        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    };
+
+    window.approvePool = function(poolId) {
+       Swal.fire({
+          title: 'Approve Citizen Pool?',
+          text: "This pool will become FORMING and open for members to join.",
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#00544f',
+          confirmButtonText: 'Yes, Approve'
+       }).then((result) => {
+          if (result.isConfirmed) {
+             fetch('/api/pools/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pool_id: poolId })
+             }).then(r => r.json()).then(data => {
+                if (data.success) window.location.reload();
+                else Swal.fire('Error', data.error, 'error');
+             });
+          }
+       });
+    };
+    
+    window.rejectPool = function(poolId) {
+       Swal.fire({
+          title: 'Reject Citizen Pool?',
+          text: "This pool will be CANCELLED permanently.",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'Yes, Reject'
+       }).then((result) => {
+          if (result.isConfirmed) {
+             fetch('/api/pools/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pool_id: poolId })
+             }).then(r => r.json()).then(data => {
+                if (data.success) window.location.reload();
+                else Swal.fire('Error', data.error, 'error');
+             });
+          }
+       });
+    };
+
+    window.openMemberModal = function(encodedMember) {
+       const member = JSON.parse(atob(encodedMember));
+       
+       const firstName = member.users?.first_name || '';
+       const lastName = member.users?.last_name || '';
+       const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous Member';
+       
+       const addr = member.users?.stellar_public_key || member.users?.address || 'Unknown Address';
+       const seq = member.payout_sequence_number || 'TBD';
+       const contributed = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(member.total_contributed || 0);
+       const role = member.users?.role || 'Member';
+       
+       Swal.fire({
+         html: `
+           <div class="text-left font-sans p-6">
+             <h3 class="font-display-sm text-on-surface mb-2">${fullName}</h3>
+             <p class="text-label-sm text-on-surface-variant uppercase tracking-widest mb-6 border-b border-outline-variant/30 pb-4">Member Profile</p>
+             
+             <div class="space-y-4">
+               <div>
+                 <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Stellar Wallet / Address</p>
+                 <code class="block font-mono text-xs text-on-surface break-all bg-surface-container-lowest p-3 border border-outline-variant/30 rounded-md">${addr}</code>
+               </div>
+               
+               <div class="grid grid-cols-2 gap-4">
+                 <div>
+                   <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Role</p>
+                   <p class="font-body-md text-on-surface">${role}</p>
+                 </div>
+                 <div>
+                   <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Payout Sequence</p>
+                   <p class="font-title-lg text-primary">#${seq}</p>
+                 </div>
+               </div>
+
+               <div class="pt-4 border-t border-outline-variant/30">
+                 <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Total Contributed</p>
+                 <p class="font-display-sm text-on-surface">${contributed}</p>
+               </div>
+             </div>
+           </div>
+         `,
+         showCloseButton: true,
+         showConfirmButton: false,
+         width: '500px',
+         padding: '0',
+         customClass: {
+           container: 'z-[99999]',
+           popup: '!rounded-none border border-outline-variant/30 !p-0 shadow-xl',
+           htmlContainer: '!m-0 !p-0',
+           closeButton: '!text-on-surface-variant hover:!bg-surface-container-lowest !m-2 !p-2 !transition-colors !absolute !top-2 !right-2',
+         }
+       });
+    };
+
+    // Drawer Logic Replaced by SweetAlert2 Modal
     window.openPoolDrawer = function(pool) {
       try {
-        const overlay = document.getElementById('pool-drawer-overlay');
-        const drawer = document.getElementById('pool-drawer');
-        
-        // Populate Header
-        document.getElementById('drawer-pool-name').textContent = pool?.pool_name || 'Unnamed Pool';
-        document.getElementById('drawer-pool-status').textContent = pool?.pool_statuses?.status_name || 'Unknown';
-        
-        // Populate Capacity
+        const poolName = pool?.pool_name || 'Unnamed Pool';
+        const poolStatus = pool?.pool_statuses?.status_name || 'Unknown';
+        const totalPayout = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(pool?.total_payout_amount || 0);
         const members = pool?.pool_members || [];
         const maxMembers = pool?.max_members || 1;
         const fillPct = Math.min(100, Math.round((members.length / maxMembers) * 100) || 0);
-        document.getElementById('drawer-capacity-text').textContent = `${members.length} of ${maxMembers} filled`;
-        document.getElementById('drawer-capacity-bar').style.width = `${fillPct}%`;
 
         // Cycle & Date Calculations
         let currentCycle = 0;
@@ -329,88 +435,138 @@ const formatCurrency = (val: number) =>
            nextPayoutStr = nextPayoutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
 
-        document.getElementById('drawer-current-cycle').textContent = currentCycle > 0 ? `Cycle ${currentCycle}` : '--';
-        document.getElementById('drawer-next-payout').textContent = nextPayoutStr;
-
-        // Populate Members
-        const listContainer = document.getElementById('drawer-members-list');
-        listContainer.innerHTML = '';
-
+        let membersHtml = '';
         if (members.length === 0) {
-           listContainer.innerHTML = `<p class="text-on-surface-variant text-body-sm text-center py-4">No members have joined yet.</p>`;
+           membersHtml = `<p class="text-on-surface-variant text-body-sm text-center py-4">No members have joined yet.</p>`;
         } else {
-           members.forEach((m, idx) => {
+           membersHtml = members.map((m, idx) => {
               const contributionRequired = pool?.cycle_contribution_amount || 0;
               const hasPaid = (m.total_contributed || 0) >= contributionRequired;
               const receivedPayout = (m.payout_sequence_number || 999) <= currentCycle;
               
-              // Format address (0xABCD...1234)
-              const addr = m.users?.address || 'Anonymous';
+              const firstName = m.users?.first_name || '';
+              const lastName = m.users?.last_name || '';
+              const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous Member';
+              
+              const addr = m.users?.stellar_public_key || m.users?.address || 'Anonymous';
               const shortAddr = addr.length > 10 ? `${addr.substring(0, 5)}...${addr.substring(addr.length - 4)}` : addr;
               
-              const card = document.createElement('div');
-              card.className = "p-3 rounded-lg border border-outline-variant/30 flex items-center justify-between bg-surface-container-lowest hover:border-primary/30 transition-colors";
-              
-              card.innerHTML = `
-                <div class="flex items-center gap-3">
-                   <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-sm">
+              const mEncoded = btoa(JSON.stringify(m));
+              return `
+              <div onclick="openMemberModal('${mEncoded}')" class="p-4 mb-3 border-b border-outline-variant/30 bg-surface flex items-center justify-between hover:bg-surface-container-lowest cursor-pointer transition-colors">
+                <div class="flex items-center gap-4">
+                   <div class="w-10 h-10 rounded-none bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-title-sm">
                       ${idx + 1}
                    </div>
-                   <div>
-                      <p class="font-title-sm text-primary">${shortAddr}</p>
-                      <p class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                   <div class="text-left">
+                      <p class="font-title-sm text-on-surface tracking-tight">${fullName}</p>
+                      <p class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-1">
                          ${hasPaid 
-                           ? '<span class="material-symbols-outlined text-green-600 text-[14px]">check_circle</span> Paid' 
-                           : '<span class="material-symbols-outlined text-orange-500 text-[14px]">pending</span> Pending'
+                           ? '<span class="material-symbols-outlined text-primary text-[14px]">check_circle</span> Paid' 
+                           : '<span class="material-symbols-outlined text-orange-400 text-[14px]">pending</span> Pending'
                          }
                       </p>
                    </div>
                 </div>
-                <div class="text-right">
-                   <p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Payout Status</p>
-                   <span class="font-title-sm ${receivedPayout ? 'text-secondary font-bold' : 'text-on-surface-variant opacity-70'}">
-                      ${receivedPayout ? 'Received' : 'Waiting'}
-                   </span>
+                <div class="text-right flex items-center gap-3">
+                   <div>
+                     <p class="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1 opacity-70">Payout</p>
+                     <span class="px-2 py-0.5 text-[11px] font-bold ${receivedPayout ? 'text-primary border border-primary/30' : 'text-on-surface-variant border border-outline-variant/30'}">
+                        ${receivedPayout ? 'RECEIVED' : 'WAITING'}
+                     </span>
+                   </div>
+                   <span class="material-symbols-outlined text-on-surface-variant/50 text-sm">chevron_right</span>
                 </div>
-              `;
-              listContainer.appendChild(card);
-           });
+              </div>`;
+           }).join('');
         }
 
-        // Teleport to body to avoid nesting context issues
-        if (overlay.parentNode !== document.body) {
-          document.body.appendChild(overlay);
-          document.body.appendChild(drawer);
-        }
+        Swal.fire({
+          html: `
+            <div class="text-left font-sans flex flex-col h-full bg-surface">
+              <!-- Minimalist Header -->
+              <div class="px-8 pt-8 pb-6 pr-16 bg-surface-container-lowest border-b border-outline-variant/30 flex items-start justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 flex items-center justify-center">
+                    <img src="/logo.png" alt="Logo" class="w-full h-full object-contain" />
+                  </div>
+                  <div>
+                    <h3 class="font-display-sm text-[22px] text-on-surface m-0 tracking-tight">${poolName}</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="w-2 h-2 rounded-full ${poolStatus.toLowerCase() === 'active' ? 'bg-primary' : 'bg-orange-400'}"></span>
+                      <p class="text-[11px] text-on-surface-variant uppercase tracking-widest">${poolStatus}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="text-right mt-1">
+                  <p class="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Total Payout</p>
+                  <p class="font-title-lg text-on-surface tracking-tight">${totalPayout}</p>
+                </div>
+              </div>
 
-        // Show Drawer
-        overlay.classList.remove('hidden');
-        
-        // Force reflow before animating
-        void overlay.offsetWidth;
+              <div class="p-8 space-y-8">
+                <!-- Progress Bar Section -->
+                <div>
+                   <div class="flex justify-between items-center text-body-sm mb-2">
+                      <span class="text-on-surface-variant uppercase text-[11px] tracking-widest">Capacity</span>
+                      <span class="text-on-surface font-semibold text-sm">${members.length} / ${maxMembers}</span>
+                   </div>
+                   <div class="w-full bg-surface-container-highest h-1 overflow-hidden">
+                      <div class="bg-primary h-full transition-all duration-700 ease-out" style="width: ${fillPct}%"></div>
+                   </div>
+                </div>
 
-        setTimeout(() => {
-          overlay.classList.remove('opacity-0');
-          overlay.style.opacity = '1';
-          drawer.style.transform = 'translateX(0)';
-        }, 10);
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-px bg-outline-variant/30 border border-outline-variant/30">
+                  <div class="bg-surface-container-lowest p-6">
+                    <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[14px]">sync</span> Cycle
+                    </p>
+                    <p class="font-title-lg text-on-surface tracking-tight">${currentCycle > 0 ? `Cycle ${currentCycle}` : '--'}</p>
+                  </div>
+                  <div class="bg-surface-container-lowest p-6">
+                    <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[14px]">event</span> Next Payout
+                    </p>
+                    <p class="font-title-lg text-on-surface tracking-tight">${nextPayoutStr}</p>
+                  </div>
+                </div>
+                
+                <!-- Members List -->
+                <div class="pt-4 border-t border-outline-variant/30">
+                  <h4 class="font-title-sm text-on-surface uppercase tracking-widest mb-4 flex items-center gap-2 text-[11px]">
+                    <span class="material-symbols-outlined text-on-surface-variant text-[16px]">receipt_long</span>
+                    Member Tracking
+                  </h4>
+                  <div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+                    ${membersHtml}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `,
+          showCloseButton: true,
+          showConfirmButton: false,
+          width: '650px',
+          padding: '0',
+          customClass: {
+            container: 'z-[99999]',
+            popup: '!rounded-none border border-outline-variant/30 !p-0 shadow-2xl',
+            htmlContainer: '!m-0 !p-0',
+            closeButton: '!text-on-surface-variant hover:!bg-surface-container-lowest !m-2 !p-2 !transition-colors !absolute !top-2 !right-2 z-[100]',
+          }
+        });
       } catch (err) {
-        console.error("Error opening drawer:", err);
-        alert("An error occurred displaying the details. Check the console.");
+        console.error("Error opening details:", err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Something went wrong while displaying pool details.'
+        });
       }
     };
 
-    window.closePoolDrawer = function() {
-      const overlay = document.getElementById('pool-drawer-overlay');
-      const drawer = document.getElementById('pool-drawer');
-      
-      overlay.style.opacity = '0';
-      drawer.style.transform = 'translateX(100%)';
-      
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-      }, 300);
-    };
 
     // SweetAlert2 Implementation for Pool Creation
     window.openCreatePoolModal = function () {

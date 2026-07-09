@@ -17,9 +17,9 @@ export const getAdminPools = async () => {
                 total_contributed,
                 payout_sequence_number,
                 joined_at,
-                users ( role, address ) 
+                users ( role, address, first_name, last_name, stellar_public_key ) 
             ),
-            users!pools_organizer_id_fkey ( role )
+            users!pools_organizer_id_fkey ( role, first_name, last_name, stellar_public_key )
         `)
         .order('created_at', { ascending: false });
 

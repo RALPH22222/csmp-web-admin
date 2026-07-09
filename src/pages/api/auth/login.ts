@@ -40,7 +40,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return new Response(JSON.stringify({ error: error.message }), { status: 401 });
   }
 
-  if (data.session) {
+  if (data.session && data.user) {
+    // Validate if the user is an admin
+    const { data: userRecord, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('auth_id', data.user.id)
+      .single();
+
+    if (userError || userRecord?.role !== 'admin') {
+      await supabase.auth.signOut();
+      return new Response(JSON.stringify({ error: "Access denied. Only administrators can log in to this dashboard." }), { status: 403 });
+    }
+
     const { access_token, refresh_token } = data.session;
     cookies.set("sb-access-token", access_token, {
       path: "/",

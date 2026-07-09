@@ -2,30 +2,35 @@
 import AdminLayout from "../layouts/AdminLayout.astro";
 import { getAdminPools } from "../server/services/poolService";
 
-let pools: any[] = [];
+let institutionalPools: any[] = [];
+let citizenPools: any[] = [];
+let allPools: any[] = [];
 
 try {
-  pools = await getAdminPools();
+  const data = await getAdminPools();
+  institutionalPools = data.institutionalPools;
+  citizenPools = data.citizenPools;
+  allPools = data.allPools;
 } catch (e) {
   console.error("Failed to fetch pools", e);
 }
 
 const activePools =
-  pools?.filter(
+  allPools?.filter(
     (p) => p.pool_statuses?.status_name?.toLowerCase() === "active",
   ) || [];
 const formingPools =
-  pools?.filter(
+  allPools?.filter(
     (p) => p.pool_statuses?.status_name?.toLowerCase() === "forming",
   ) || [];
 
 const totalManaged =
-  pools?.reduce((acc, p) => acc + Number(p.total_payout_amount || 0), 0) || 0;
-const avgContribution = pools?.length
-  ? pools.reduce(
+  allPools?.reduce((acc, p) => acc + Number(p.total_payout_amount || 0), 0) || 0;
+const avgContribution = allPools?.length
+  ? allPools.reduce(
       (acc, p) => acc + Number(p.cycle_contribution_amount || 0),
       0,
-    ) / pools.length
+    ) / allPools.length
   : 0;
 
 const formatCurrency = (val: number) =>
@@ -37,8 +42,10 @@ const formatCurrency = (val: number) =>
 <AdminLayout
   title="CSMP - Pool Management"
   pageTitle="Pool Management"
-  currentPath="/pool-management"
 >
+  <Fragment slot="head">
+    <script is:inline src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </Fragment>
   <!-- Header Section -->
   <div class="flex justify-between items-center mb-xl">
     <div>
@@ -51,7 +58,7 @@ const formatCurrency = (val: number) =>
     </div>
     <button
       class="flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-xl font-title-sm text-title-sm hover:opacity-90 transition-all active:scale-95 shadow-sm"
-      onclick="toggleModal('pool-modal')"
+      onclick="openCreatePoolModal()"
     >
       <span class="material-symbols-outlined">add</span>
       Create New Pool
@@ -126,17 +133,19 @@ const formatCurrency = (val: number) =>
   </div>
 
   <!-- Pool Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+  <div class="mb-4 mt-8 flex items-center justify-between">
+    <h3 class="font-headline-md text-headline-md text-primary">Institutional Pools</h3>
+    <span class="text-body-sm text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full">{institutionalPools.length} Pools</span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg mb-xl">
     {
-      pools &&
-        pools.map((pool) => {
+      institutionalPools &&
+        institutionalPools.map((pool) => {
           const status = pool.pool_statuses?.status_name || "Unknown";
           const isForming = status.toLowerCase() === "forming";
           const membersCount = pool.pool_members?.length || 0;
-          const fillPercentage = Math.min(
-            100,
-            Math.round((membersCount / pool.max_members) * 100),
-          );
+          const fillPercentage = Math.min(100, Math.round((membersCount / pool.max_members) * 100) || 0);
 
           return (
             <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
@@ -144,42 +153,25 @@ const formatCurrency = (val: number) =>
                 <h4 class="font-headline-md text-headline-md text-primary truncate pr-2">
                   {pool.pool_name}
                 </h4>
-                <span
-                  class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${
-                    isForming
-                      ? "bg-tertiary-fixed/30 text-tertiary-fixed-dim"
-                      : "bg-secondary/15 text-secondary"
-                  }`}
-                >
+                <span class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${isForming ? "bg-tertiary-fixed/30 text-tertiary-fixed-dim" : "bg-secondary/15 text-secondary"}`}>
                   {status}
                 </span>
               </div>
               <div class="space-y-4">
                 <div class="flex justify-between items-center text-body-md font-body-md">
                   <span class="text-on-surface-variant">Max Members</span>
-                  <span class="text-primary font-semibold">
-                    {pool.max_members}
-                  </span>
+                  <span class="text-primary font-semibold">{pool.max_members}</span>
                 </div>
                 <div class="flex justify-between items-center text-body-md font-body-md">
                   <span class="text-on-surface-variant">Contribution</span>
-                  <span class="text-primary font-semibold">
-                    {formatCurrency(pool.cycle_contribution_amount)}
-                  </span>
+                  <span class="text-primary font-semibold">{formatCurrency(pool.cycle_contribution_amount)}</span>
                 </div>
                 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-                  <div
-                    class={`${isForming ? "bg-tertiary-fixed-dim" : "bg-secondary"} h-full rounded-full`}
-                    style={`width: ${fillPercentage}%`}
-                  />
+                  <div class={`${isForming ? "bg-tertiary-fixed-dim" : "bg-secondary"} h-full rounded-full`} style={`width: ${fillPercentage}%`} />
                 </div>
                 <div class="flex justify-between items-center text-body-sm font-body-sm">
-                  <span class="text-on-surface-variant">
-                    {membersCount} of {pool.max_members} filled
-                  </span>
-                  <span class="text-primary">
-                    {isForming ? "Recruiting" : "In Progress"}
-                  </span>
+                  <span class="text-on-surface-variant">{membersCount} of {pool.max_members} filled</span>
+                  <span class="text-primary">{isForming ? "Recruiting" : "In Progress"}</span>
                 </div>
               </div>
               <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
@@ -189,187 +181,164 @@ const formatCurrency = (val: number) =>
           );
         })
     }
-    <!-- New Pool Placeholder -->
-    <button
-      class="p-lg rounded-xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center text-on-surface-variant hover:border-primary hover:text-primary transition-all group h-full bg-surface-container-low/30 min-h-[250px]"
-      onclick="toggleModal('pool-modal')"
-    >
-      <span
-        class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform"
-        >add_circle</span
-      >
-      <span class="font-title-sm text-title-sm"
-        >Establish New Savings Group</span
-      >
-    </button>
   </div>
 
-  <!-- Side Panel / Modal for Configuration -->
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-end invisible opacity-0 transition-all duration-300"
-    id="pool-modal"
-  >
-    <div
-      class="absolute inset-0 bg-[#00342b]/40 backdrop-blur-[4px]"
-      onclick="toggleModal('pool-modal')"
-    >
+  <div class="mb-4 mt-8 flex items-center justify-between border-t border-outline-variant/20 pt-8">
+    <div>
+      <h3 class="font-headline-md text-headline-md text-primary">Citizen Pools</h3>
+      <p class="text-on-surface-variant text-body-sm">Created by verified agents and citizens.</p>
     </div>
-    <div
-      class="bg-white w-full max-w-lg h-full relative z-10 shadow-2xl p-xl flex flex-col transform translate-x-full transition-transform duration-300"
-      id="modal-panel"
-    >
-      <div class="flex justify-between items-center mb-xl">
-        <h3 class="font-display-lg text-display-lg text-primary">
-          Configure New Pool
-        </h3>
-        <button
-          class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors"
-          onclick="toggleModal('pool-modal')"
-        >
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <form class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-lg">
-        <div>
-          <label
-            class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
-            >Pool Name</label
-          >
-          <input
-            class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
-            placeholder="e.g. Mindanao Enterprise Group"
-            type="text"
-          />
-        </div>
-        <div class="grid grid-cols-2 gap-md">
-          <div>
-            <label
-              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
-              >Total Payout Amount</label
-            >
-            <div class="relative">
-              <span
-                class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-primary"
-                >₱</span
-              >
-              <input
-                class="w-full pl-8 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
-                placeholder="5,000"
-                type="number"
-              />
+    <span class="text-body-sm text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full">{citizenPools.length} Pools</span>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+    {
+      citizenPools && citizenPools.length > 0 ?
+        citizenPools.map((pool) => {
+          const status = pool.pool_statuses?.status_name || "Unknown";
+          const isForming = status.toLowerCase() === "forming";
+          const membersCount = pool.pool_members?.length || 0;
+          const fillPercentage = Math.min(100, Math.round((membersCount / pool.max_members) * 100) || 0);
+
+          return (
+            <div class="bg-white p-lg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant/30 hover:border-primary/30 transition-all group">
+              <div class="flex justify-between items-start mb-lg">
+                <h4 class="font-headline-md text-headline-md text-primary truncate pr-2">
+                  {pool.pool_name}
+                </h4>
+                <span class={`px-3 py-1 rounded-full font-label-caps text-label-caps uppercase flex-none ${isForming ? "bg-tertiary-fixed/30 text-tertiary-fixed-dim" : "bg-secondary/15 text-secondary"}`}>
+                  {status}
+                </span>
+              </div>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center text-body-md font-body-md">
+                  <span class="text-on-surface-variant">Max Members</span>
+                  <span class="text-primary font-semibold">{pool.max_members}</span>
+                </div>
+                <div class="flex justify-between items-center text-body-md font-body-md">
+                  <span class="text-on-surface-variant">Contribution</span>
+                  <span class="text-primary font-semibold">{formatCurrency(pool.cycle_contribution_amount)}</span>
+                </div>
+                <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+                  <div class={`${isForming ? "bg-tertiary-fixed-dim" : "bg-secondary"} h-full rounded-full`} style={`width: ${fillPercentage}%`} />
+                </div>
+                <div class="flex justify-between items-center text-body-sm font-body-sm">
+                  <span class="text-on-surface-variant">{membersCount} of {pool.max_members} filled</span>
+                  <span class="text-primary">{isForming ? "Recruiting" : "In Progress"}</span>
+                </div>
+              </div>
+              <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
+                Manage Details
+              </button>
             </div>
-          </div>
-          <div>
-            <label
-              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
-              >Cycle Contribution</label
-            >
-            <div class="relative">
-              <span
-                class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-primary"
-                >₱</span
-              >
-              <input
-                class="w-full pl-8 pr-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
-                placeholder="200"
-                type="number"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-md">
-          <div>
-            <label
-              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
-              >Max Members</label
-            >
-            <input
-              class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md"
-              type="number"
-              value="10"
-            />
-          </div>
-          <div>
-            <label
-              class="block font-label-caps text-label-caps uppercase text-on-surface-variant mb-2"
-              >Cycle Duration</label
-            >
-            <select
-              class="w-full px-4 py-3 rounded-lg border border-outline-variant focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none font-body-md text-body-md bg-white"
-            >
-              <option>Weekly</option>
-              <option>Bi-Weekly</option>
-              <option>Monthly</option>
-            </select>
-          </div>
-        </div>
-        <div
-          class="p-lg bg-surface-container-low rounded-xl border border-outline-variant/30 space-y-3 mt-4"
-        >
-          <p class="font-title-sm text-title-sm text-primary">
-            Cycle Projections
-          </p>
-          <div class="flex justify-between text-body-md">
-            <span class="text-on-surface-variant">Total Duration</span>
-            <span class="font-semibold">10 Weeks</span>
-          </div>
-          <div class="flex justify-between text-body-md">
-            <span class="text-on-surface-variant">Annualized Yield Equiv.</span>
-            <span class="font-semibold text-secondary">4.2%</span>
-          </div>
-          <div class="flex justify-between text-body-md">
-            <span class="text-on-surface-variant">Reserve Requirement</span>
-            <span class="font-semibold">₱500</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 mt-4">
-          <input
-            class="rounded border-outline-variant text-primary focus:ring-primary"
-            id="terms"
-            type="checkbox"
-          />
-          <label class="text-body-sm text-on-surface-variant" for="terms"
-            >I confirm that this pool follows the institutional compliance
-            guidelines for micro-savings protocols.</label
-          >
-        </div>
-      </form>
-      <div class="pt-xl flex gap-md border-t border-outline-variant/20 mt-auto">
-        <button
-          class="flex-1 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-title-sm text-title-sm hover:bg-surface-container-low transition-colors"
-          onclick="toggleModal('pool-modal')">Cancel</button
-        >
-        <button
-          class="flex-1 py-3 rounded-lg bg-primary text-on-primary font-title-sm text-title-sm hover:opacity-90 transition-all shadow-sm"
-          >Save &amp; Initialize</button
-        >
+          );
+        })
+      :
+      <div class="col-span-full py-xl text-center border-2 border-dashed border-outline-variant/50 rounded-xl bg-surface-container-low/30">
+        <span class="material-symbols-outlined text-4xl text-on-surface-variant/50 mb-2">sentiment_dissatisfied</span>
+        <p class="text-on-surface-variant font-body-md">No citizen pools have been created yet.</p>
       </div>
-    </div>
+    }
   </div>
 
   <script is:inline>
-    // Making it global so onclick attribute works
-    window.toggleModal = function (id) {
-      const modal = document.getElementById(id);
-      const panel = document.getElementById("modal-panel");
+    // SweetAlert2 Implementation for Pool Creation
+    window.openCreatePoolModal = function () {
+      Swal.fire({
+        title: '<h3 class="font-display-md text-primary" style="font-size: 24px;">Configure New Pool</h3>',
+        html: `
+          <div style="text-align: left; padding: 10px;">
+            <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Pool Name</label>
+            <input id="swal-pool-name" class="swal2-input" placeholder="e.g. Mindanao Enterprise Group" style="width: 100%; max-width: 100%; margin: 0 0 15px 0;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+              <div>
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Total Payout (₱)</label>
+                <input id="swal-payout" class="swal2-input" type="number" placeholder="5000" style="width: 100%; max-width: 100%; margin: 0;">
+              </div>
+              <div>
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Contribution (₱)</label>
+                <input id="swal-contribution" class="swal2-input" type="number" placeholder="200" style="width: 100%; max-width: 100%; margin: 0;">
+              </div>
+            </div>
 
-      if (modal.classList.contains("invisible")) {
-        modal.classList.remove("invisible");
-        modal.classList.add("visible");
-        modal.classList.add("opacity-100");
-        panel.classList.remove("translate-x-full");
-        panel.classList.add("translate-x-0");
-        document.body.style.overflow = "hidden";
-      } else {
-        panel.classList.remove("translate-x-0");
-        panel.classList.add("translate-x-full");
-        setTimeout(() => {
-          modal.classList.remove("visible");
-          modal.classList.add("invisible");
-          modal.classList.remove("opacity-100");
-          document.body.style.overflow = "auto";
-        }, 300);
-      }
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+              <div>
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Max Members</label>
+                <input id="swal-members" class="swal2-input" type="number" value="10" style="width: 100%; max-width: 100%; margin: 0;">
+              </div>
+              <div>
+                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Cycle Duration</label>
+                <select id="swal-duration" class="swal2-input" style="width: 100%; max-width: 100%; margin: 0; padding: 0 10px;">
+                  <option>Weekly</option>
+                  <option>Bi-Weekly</option>
+                  <option>Monthly</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px;">
+              <p style="margin: 0 0 10px 0; font-weight: bold; color: #00342b;">Cycle Projections</p>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Total Duration</span> <strong>10 Weeks</strong></div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Yield Equiv.</span> <strong style="color: #008761;">4.2%</strong></div>
+            </div>
+          </div>
+        `,
+        position: 'center',
+        showCancelButton: true,
+        confirmButtonText: 'Save & Initialize',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#00342b',
+        cancelButtonColor: '#e0e0e0',
+        width: '500px',
+        customClass: {
+          popup: 'rounded-xl',
+          confirmButton: 'rounded-lg',
+          cancelButton: 'rounded-lg text-on-surface-variant'
+        },
+        preConfirm: () => {
+          const poolName = document.getElementById('swal-pool-name').value;
+          const payout = document.getElementById('swal-payout').value;
+          const contribution = document.getElementById('swal-contribution').value;
+          const maxMembers = document.getElementById('swal-members').value;
+
+          if (!poolName || !payout || !contribution || !maxMembers) {
+            Swal.showValidationMessage('Please fill out all required fields');
+            return false;
+          }
+
+          return fetch('/api/pools/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pool_name: poolName,
+              total_payout_amount: Number(payout),
+              cycle_contribution_amount: Number(contribution),
+              max_members: Number(maxMembers)
+            })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(response.statusText)
+            }
+            return response.json()
+          })
+          .catch(error => {
+            Swal.showValidationMessage(`Request failed: ${error}`)
+          });
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Pool Created!',
+            text: 'The new institutional micro-finance pool is now forming.',
+            icon: 'success',
+            confirmButtonColor: '#00342b'
+          }).then(() => {
+            window.location.reload();
+          });
+        }
+      });
     };
   </script>
 </AdminLayout>

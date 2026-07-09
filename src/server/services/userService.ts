@@ -1,7 +1,7 @@
-import { supabase } from '../supabase';
+import { supabaseAdmin } from '../supabase';
 
 export const getAdminUsers = async () => {
-    const { data: users } = await supabase
+    const { data: users, error } = await supabaseAdmin
         .from('users')
         .select(`
             *,
@@ -12,6 +12,10 @@ export const getAdminUsers = async () => {
             )
         `)
         .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching admin users:", error);
+    }
 
     return users || [];
 };

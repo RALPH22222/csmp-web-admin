@@ -1,13 +1,13 @@
-import { supabase } from '../supabase';
+import { supabaseAdmin } from '../supabase';
 
 export const getDashboardStats = async () => {
     // Run all queries concurrently. We append .then(res => res) to convert PostgrestBuilders into native Promises
     // which prevents Astro's SSR Promise.all from hanging indefinitely.
     const [poolsRes, usersRes, transactionsRes] = await Promise.all([
-        supabase.from('pools').select('*').then(res => res),
+        supabaseAdmin.from('pools').select('*').then(res => res),
         // Fetch all users with their address (limit to 1000 for safety on large datasets)
-        supabase.from('users').select('address', { count: 'exact' }).limit(1000).then(res => res),
-        supabase
+        supabaseAdmin.from('users').select('address', { count: 'exact' }).limit(1000).then(res => res),
+        supabaseAdmin
             .from('transactions')
             .select(`
                 amount,

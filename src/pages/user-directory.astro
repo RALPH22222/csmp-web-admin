@@ -10,13 +10,42 @@ try {
   console.error("Failed to fetch users", e);
 }
 const totalUsers = users?.length || 0;
+const validScores = users?.filter(u => u.did_credit_score) || [];
 const avgScore =
-  totalUsers > 0
+  validScores.length > 0
     ? Math.round(
-        users!.reduce((acc, u) => acc + (u.did_credit_score || 0), 0) /
-          totalUsers,
+        validScores.reduce((acc, u) => acc + (u.did_credit_score || 0), 0) /
+          validScores.length,
       )
     : 0;
+
+// Dynamic Stats
+const defaultedUsers = users?.filter(u => u.did_credit_score && u.did_credit_score < 400).length || 0;
+const defaultRate = totalUsers > 0 ? ((defaultedUsers / totalUsers) * 100).toFixed(2) : "0.00";
+
+const pendingVerifications = users?.filter(u => !u.did_credit_score).length || 0;
+
+const topTierCount = users?.filter(u => u.did_credit_score >= 700).length || 0;
+const medTierCount = users?.filter(u => u.did_credit_score >= 500 && u.did_credit_score < 700).length || 0;
+const atRiskCount = users?.filter(u => u.did_credit_score > 0 && u.did_credit_score < 500).length || 0;
+const scoredUsersCount = topTierCount + medTierCount + atRiskCount;
+
+const topTierPercent = scoredUsersCount > 0 ? Math.round((topTierCount / scoredUsersCount) * 100) : 0;
+const medTierPercent = scoredUsersCount > 0 ? Math.round((medTierCount / scoredUsersCount) * 100) : 0;
+const atRiskPercent = scoredUsersCount > 0 ? Math.round((atRiskCount / scoredUsersCount) * 100) : 0;
+
+const recentUsers = [...users].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 4);
+
+const timeAgo = (dateStr: string) => {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${Math.max(1, minutes)} minutes ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} days ago`;
+}
 
 // Pagination
 const currentPage = Number(Astro.url.searchParams.get("page")) || 1;
@@ -47,8 +76,7 @@ const paginatedUsers =
         <span
           class="flex items-center text-secondary text-body-sm font-bold pb-1"
         >
-          <span class="material-symbols-outlined text-[16px]">arrow_upward</span
-          > 12%
+          <span class="material-symbols-outlined text-[16px]">person</span> 
         </span>
       </div>
     </div>
@@ -65,7 +93,7 @@ const paginatedUsers =
         <span
           class="flex items-center text-secondary text-body-sm font-bold pb-1"
         >
-          <span class="material-symbols-outlined text-[16px]">trending_up</span> Good
+          <span class="material-symbols-outlined text-[16px]">trending_up</span> {avgScore >= 700 ? "Good" : avgScore >= 500 ? "Fair" : "At Risk"}
         </span>
       </div>
     </div>
@@ -76,13 +104,13 @@ const paginatedUsers =
         Portfolio Default Rate
       </p>
       <div class="flex items-end gap-2">
-        <span class="font-display-lg text-display-lg text-primary">0.84%</span>
+        <span class="font-display-lg text-display-lg text-primary">{defaultRate}%</span>
         <span
           class="flex items-center text-on-tertiary-container text-body-sm font-bold pb-1"
         >
           <span class="material-symbols-outlined text-[16px]"
-            >arrow_downward</span
-          > 0.2%
+            >{Number(defaultRate) > 5 ? "warning" : "check_circle"}</span
+          >
         </span>
       </div>
     </div>
@@ -93,14 +121,16 @@ const paginatedUsers =
         Pending Verifications
       </p>
       <div class="flex items-end gap-2">
-        <span class="font-display-lg text-display-lg text-primary">158</span>
+        <span class="font-display-lg text-display-lg text-primary">{pendingVerifications}</span>
+        {pendingVerifications > 0 && (
         <span
           class="flex items-center text-on-error-container text-body-sm font-bold pb-1"
         >
           <span class="material-symbols-outlined text-[16px]"
             >priority_high</span
-          > High
+          > Action needed
         </span>
+        )}
       </div>
     </div>
   </div>
@@ -200,10 +230,7 @@ const paginatedUsers =
                             {user.first_name} {user.last_name}
                           </p>
                           <p class="font-body-sm text-body-sm text-on-surface-variant">
-                            {user.stellar_public_key?.substring(0, 8)}...
-                            {user.stellar_public_key?.substring(
-                              user.stellar_public_key.length - 4,
-                            )}
+                            {user.stellar_public_key ? `${user.stellar_public_key.substring(0, 8)}...${user.stellar_public_key.substring(user.stellar_public_key.length - 4)}` : "No public key"}
                           </p>
                         </div>
                       </div>
@@ -304,10 +331,10 @@ const paginatedUsers =
         <h3 class="font-headline-md text-headline-md mb-2">
           Institutional Credit Report
         </h3>
-        <p class="font-body-md text-body-md opacity-80 mb-6 max-w-md">
+        <p class="font-body-md text-body-md opacity-80 mb-6">
           Comprehensive analysis of the current portfolio health. Decentralized
-          Identity (DID) score distribution remains skewed toward 'Excellent'
-          (750+), indicating strong protocol stability.
+          Identity (DID) score distribution shows {topTierPercent}% in the 'Excellent'
+          tier (700+).
         </p>
         <div class="grid grid-cols-3 gap-4">
           <div
@@ -318,7 +345,7 @@ const paginatedUsers =
             >
               Top Tier
             </p>
-            <p class="text-2xl font-bold">78%</p>
+            <p class="text-2xl font-bold">{topTierPercent}%</p>
           </div>
           <div
             class="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20"
@@ -328,7 +355,7 @@ const paginatedUsers =
             >
               Med Tier
             </p>
-            <p class="text-2xl font-bold">15%</p>
+            <p class="text-2xl font-bold">{medTierPercent}%</p>
           </div>
           <div
             class="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20"
@@ -338,7 +365,7 @@ const paginatedUsers =
             >
               At Risk
             </p>
-            <p class="text-2xl font-bold">7%</p>
+            <p class="text-2xl font-bold">{atRiskPercent}%</p>
           </div>
         </div>
       </div>
@@ -359,52 +386,22 @@ const paginatedUsers =
         Recent Activity
       </h3>
       <div class="space-y-4">
-        <div class="flex gap-3">
-          <div class="mt-1 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
-          <div>
-            <p class="font-body-sm text-body-sm">
-              <strong>Sarah Chen</strong> score updated to <span
-                class="text-secondary font-bold">720</span>
-            </p>
-            <p class="text-[10px] text-on-surface-variant uppercase">
-              2 minutes ago
-            </p>
+        {recentUsers.map((user, index) => (
+          <div class="flex gap-3">
+            <div class={`mt-1 w-2 h-2 rounded-full ${index % 2 === 0 ? 'bg-secondary' : 'bg-primary'} shrink-0`}></div>
+            <div>
+              <p class="font-body-sm text-body-sm">
+                <strong>{user.first_name} {user.last_name}</strong> joined the platform
+              </p>
+              <p class="text-[10px] text-on-surface-variant uppercase">
+                {timeAgo(user.created_at)}
+              </p>
+            </div>
           </div>
-        </div>
-        <div class="flex gap-3">
-          <div class="mt-1 w-2 h-2 rounded-full bg-tertiary-fixed-dim shrink-0">
-          </div>
-          <div>
-            <p class="font-body-sm text-body-sm">
-              <strong>Marcus Miller</strong> missed pool contribution
-            </p>
-            <p class="text-[10px] text-on-surface-variant uppercase">
-              1 hour ago
-            </p>
-          </div>
-        </div>
-        <div class="flex gap-3">
-          <div class="mt-1 w-2 h-2 rounded-full bg-primary shrink-0"></div>
-          <div>
-            <p class="font-body-sm text-body-sm">
-              <strong>Julianne Devis</strong> joined "Global Yield" pool
-            </p>
-            <p class="text-[10px] text-on-surface-variant uppercase">
-              4 hours ago
-            </p>
-          </div>
-        </div>
-        <div class="flex gap-3">
-          <div class="mt-1 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
-          <div>
-            <p class="font-body-sm text-body-sm">
-              KYC Verified: <strong>Elena Lopez</strong>
-            </p>
-            <p class="text-[10px] text-on-surface-variant uppercase">
-              Yesterday
-            </p>
-          </div>
-        </div>
+        ))}
+        {recentUsers.length === 0 && (
+          <p class="text-body-sm text-on-surface-variant">No recent activity.</p>
+        )}
       </div>
       <button
         class="w-full mt-6 py-2 text-primary font-title-sm text-title-sm border border-primary/20 rounded-lg hover:bg-primary/5 transition-colors"

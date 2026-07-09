@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../server/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   let email = "";
@@ -41,16 +42,30 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   if (data.session && data.user) {
-    // Validate if the user is an admin
-    const { data: userRecord, error: userError } = await supabase
+    // Create a fresh client explicitly injected with the user's JWT to guarantee RLS bypass/validation
+    const authedSupabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+      {
+        global: { headers: { Authorization: `Bearer ${data.session.access_token}` } }
+      }
+    );
+
+    const { data: userRecord, error: userError } = await authedSupabase
       .from('users')
       .select('role')
       .eq('auth_id', data.user.id)
       .single();
 
     if (userError || userRecord?.role !== 'admin') {
+      const debugPayload = { userError, userRecord, authId: data.user.id };
+      console.error("Admin Login Check Failed:", debugPayload);
+      
       await supabase.auth.signOut();
-      return new Response(JSON.stringify({ error: "Access denied. Only administrators can log in to this dashboard." }), { status: 403 });
+      return new Response(JSON.stringify({ 
+        error: "Access denied. Only administrators can log in to this dashboard.",
+        debug: debugPayload
+      }), { status: 403 });
     }
 
     const { access_token, refresh_token } = data.session;

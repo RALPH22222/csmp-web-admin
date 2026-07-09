@@ -174,7 +174,7 @@ const formatCurrency = (val: number) =>
                   <span class="text-primary">{isForming ? "Recruiting" : "In Progress"}</span>
                 </div>
               </div>
-              <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
+              <button data-pool={JSON.stringify(pool)} onclick="window.openPoolDrawer(JSON.parse(this.dataset.pool))" class="manage-details-btn w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
                 Manage Details
               </button>
             </div>
@@ -227,7 +227,7 @@ const formatCurrency = (val: number) =>
                   <span class="text-primary">{isForming ? "Recruiting" : "In Progress"}</span>
                 </div>
               </div>
-              <button class="w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
+              <button data-pool={JSON.stringify(pool)} onclick="window.openPoolDrawer(JSON.parse(this.dataset.pool))" class="manage-details-btn w-full mt-lg py-3 rounded-lg border border-primary text-primary font-title-sm text-title-sm hover:bg-primary/5 transition-colors">
                 Manage Details
               </button>
             </div>
@@ -241,35 +241,207 @@ const formatCurrency = (val: number) =>
     }
   </div>
 
+  <!-- Side Drawer UI -->
+  <div id="pool-drawer-overlay" onclick="closePoolDrawer()" class="fixed inset-0 bg-black/50 hidden opacity-0 transition-opacity duration-300 cursor-pointer" style="z-index: 99998;"></div>
+  
+  <div id="pool-drawer" class="fixed top-0 right-0 h-screen w-full max-w-md bg-surface transition-transform duration-300 shadow-2xl flex flex-col" style="z-index: 99999; transform: translateX(100%);">
+    <!-- Drawer Header -->
+    <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-lowest">
+      <div>
+        <h3 id="drawer-pool-name" class="font-headline-sm text-headline-sm text-primary">Pool Name</h3>
+        <p id="drawer-pool-status" class="text-label-sm text-on-surface-variant font-label-sm uppercase tracking-widest mt-1">Status</p>
+      </div>
+      <button onclick="closePoolDrawer()" class="p-2 hover:bg-surface-container-highest text-on-surface-variant rounded-full transition-colors flex items-center justify-center">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    
+    <!-- Drawer Content -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 bg-surface">
+      <!-- Progress Bar -->
+      <div>
+         <div class="flex justify-between items-center text-body-sm font-body-sm mb-2">
+            <span class="text-on-surface-variant">Capacity</span>
+            <span id="drawer-capacity-text" class="text-primary font-semibold">0 / 0 filled</span>
+         </div>
+         <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+            <div id="drawer-capacity-bar" class="bg-secondary h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+         </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-surface-container-lowest border border-outline-variant/30 p-4 rounded-xl shadow-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Current Cycle</p>
+          <p id="drawer-current-cycle" class="font-title-lg text-primary">--</p>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/30 p-4 rounded-xl shadow-sm">
+          <p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Next Payout</p>
+          <p id="drawer-next-payout" class="font-title-lg text-secondary">--</p>
+        </div>
+      </div>
+      
+      <!-- Members List -->
+      <div>
+        <h4 class="font-title-md text-primary mb-4 flex items-center gap-2 pb-2 border-b border-outline-variant/20">
+          <span class="material-symbols-outlined text-secondary text-sm">group</span>
+          Members & Tracking
+        </h4>
+        <div id="drawer-members-list" class="space-y-3">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script is:inline>
+    // Drawer Logic
+    window.openPoolDrawer = function(pool) {
+      try {
+        const overlay = document.getElementById('pool-drawer-overlay');
+        const drawer = document.getElementById('pool-drawer');
+        
+        // Populate Header
+        document.getElementById('drawer-pool-name').textContent = pool?.pool_name || 'Unnamed Pool';
+        document.getElementById('drawer-pool-status').textContent = pool?.pool_statuses?.status_name || 'Unknown';
+        
+        // Populate Capacity
+        const members = pool?.pool_members || [];
+        const maxMembers = pool?.max_members || 1;
+        const fillPct = Math.min(100, Math.round((members.length / maxMembers) * 100) || 0);
+        document.getElementById('drawer-capacity-text').textContent = `${members.length} of ${maxMembers} filled`;
+        document.getElementById('drawer-capacity-bar').style.width = `${fillPct}%`;
+
+        // Cycle & Date Calculations
+        let currentCycle = 0;
+        let nextPayoutStr = 'Waiting to start';
+        
+        if (pool?.start_date) {
+           const startDate = new Date(pool.start_date);
+           const now = new Date();
+           const diffTime = Math.abs(now - startDate);
+           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+           const cycleDays = pool.cycle_duration_days || 7;
+           currentCycle = Math.floor(diffDays / cycleDays) + 1;
+           
+           const nextPayoutDate = new Date(startDate);
+           nextPayoutDate.setDate(nextPayoutDate.getDate() + (currentCycle * cycleDays));
+           nextPayoutStr = nextPayoutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        document.getElementById('drawer-current-cycle').textContent = currentCycle > 0 ? `Cycle ${currentCycle}` : '--';
+        document.getElementById('drawer-next-payout').textContent = nextPayoutStr;
+
+        // Populate Members
+        const listContainer = document.getElementById('drawer-members-list');
+        listContainer.innerHTML = '';
+
+        if (members.length === 0) {
+           listContainer.innerHTML = `<p class="text-on-surface-variant text-body-sm text-center py-4">No members have joined yet.</p>`;
+        } else {
+           members.forEach((m, idx) => {
+              const contributionRequired = pool?.cycle_contribution_amount || 0;
+              const hasPaid = (m.total_contributed || 0) >= contributionRequired;
+              const receivedPayout = (m.payout_sequence_number || 999) <= currentCycle;
+              
+              // Format address (0xABCD...1234)
+              const addr = m.users?.address || 'Anonymous';
+              const shortAddr = addr.length > 10 ? `${addr.substring(0, 5)}...${addr.substring(addr.length - 4)}` : addr;
+              
+              const card = document.createElement('div');
+              card.className = "p-3 rounded-lg border border-outline-variant/30 flex items-center justify-between bg-surface-container-lowest hover:border-primary/30 transition-colors";
+              
+              card.innerHTML = `
+                <div class="flex items-center gap-3">
+                   <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-sm">
+                      ${idx + 1}
+                   </div>
+                   <div>
+                      <p class="font-title-sm text-primary">${shortAddr}</p>
+                      <p class="text-label-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+                         ${hasPaid 
+                           ? '<span class="material-symbols-outlined text-green-600 text-[14px]">check_circle</span> Paid' 
+                           : '<span class="material-symbols-outlined text-orange-500 text-[14px]">pending</span> Pending'
+                         }
+                      </p>
+                   </div>
+                </div>
+                <div class="text-right">
+                   <p class="text-label-sm text-on-surface-variant uppercase tracking-wider mb-0.5">Payout Status</p>
+                   <span class="font-title-sm ${receivedPayout ? 'text-secondary font-bold' : 'text-on-surface-variant opacity-70'}">
+                      ${receivedPayout ? 'Received' : 'Waiting'}
+                   </span>
+                </div>
+              `;
+              listContainer.appendChild(card);
+           });
+        }
+
+        // Teleport to body to avoid nesting context issues
+        if (overlay.parentNode !== document.body) {
+          document.body.appendChild(overlay);
+          document.body.appendChild(drawer);
+        }
+
+        // Show Drawer
+        overlay.classList.remove('hidden');
+        
+        // Force reflow before animating
+        void overlay.offsetWidth;
+
+        setTimeout(() => {
+          overlay.classList.remove('opacity-0');
+          overlay.style.opacity = '1';
+          drawer.style.transform = 'translateX(0)';
+        }, 10);
+      } catch (err) {
+        console.error("Error opening drawer:", err);
+        alert("An error occurred displaying the details. Check the console.");
+      }
+    };
+
+    window.closePoolDrawer = function() {
+      const overlay = document.getElementById('pool-drawer-overlay');
+      const drawer = document.getElementById('pool-drawer');
+      
+      overlay.style.opacity = '0';
+      drawer.style.transform = 'translateX(100%)';
+      
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+      }, 300);
+    };
+
     // SweetAlert2 Implementation for Pool Creation
     window.openCreatePoolModal = function () {
       Swal.fire({
-        title: '<h3 class="font-display-md text-primary" style="font-size: 24px;">Configure New Pool</h3>',
+        title: '<div class="flex items-center justify-center gap-3"><span class="material-symbols-outlined text-primary text-3xl">savings</span><h3 class="font-display-md text-primary m-0" style="font-size: 24px;">Configure New Pool</h3></div>',
         html: `
-          <div style="text-align: left; padding: 10px;">
-            <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Pool Name</label>
-            <input id="swal-pool-name" class="swal2-input" placeholder="e.g. Mindanao Enterprise Group" style="width: 100%; max-width: 100%; margin: 0 0 15px 0;">
+          <div class="text-left mt-2">
+            <div class="mb-5">
+              <label class="block text-label-caps font-label-caps uppercase text-on-surface-variant mb-2">Pool Name</label>
+              <input id="swal-pool-name" class="w-full px-4 py-3 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-lg font-body-lg bg-surface-container-lowest" placeholder="e.g. Mindanao Enterprise Group">
+            </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Total Payout (₱)</label>
-                <input id="swal-payout" class="swal2-input" type="number" placeholder="5000" style="width: 100%; max-width: 100%; margin: 0;">
+                <label class="block text-label-caps font-label-caps uppercase text-on-surface-variant mb-2">Total Payout (₱)</label>
+                <input id="swal-payout" type="text" inputmode="numeric" class="w-full px-4 py-3 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-lg font-body-lg bg-surface-container-lowest" placeholder="5,000">
               </div>
               <div>
-                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Contribution (₱)</label>
-                <input id="swal-contribution" class="swal2-input" type="number" placeholder="200" style="width: 100%; max-width: 100%; margin: 0;">
+                <label class="block text-label-caps font-label-caps uppercase text-on-surface-variant mb-2">Contribution (₱)</label>
+                <input id="swal-contribution" type="text" inputmode="numeric" class="w-full px-4 py-3 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-lg font-body-lg bg-surface-container-lowest" placeholder="200">
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Max Members</label>
-                <input id="swal-members" class="swal2-input" type="number" value="10" style="width: 100%; max-width: 100%; margin: 0;">
+                <label class="block text-label-caps font-label-caps uppercase text-on-surface-variant mb-2">Max Members</label>
+                <input id="swal-members" type="number" value="10" class="w-full px-4 py-3 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-lg font-body-lg bg-surface-container-lowest">
               </div>
               <div>
-                <label style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; display: block; margin-bottom: 5px; font-weight: bold;">Cycle Duration</label>
-                <select id="swal-duration" class="swal2-input" style="width: 100%; max-width: 100%; margin: 0; padding: 0 10px;">
+                <label class="block text-label-caps font-label-caps uppercase text-on-surface-variant mb-2">Cycle Duration</label>
+                <select id="swal-duration" class="w-full px-4 py-3 rounded-xl border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-lg font-body-lg bg-surface-container-lowest">
                   <option>Weekly</option>
                   <option>Bi-Weekly</option>
                   <option>Monthly</option>
@@ -277,10 +449,21 @@ const formatCurrency = (val: number) =>
               </div>
             </div>
             
-            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 13px;">
-              <p style="margin: 0 0 10px 0; font-weight: bold; color: #00342b;">Cycle Projections</p>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Total Duration</span> <strong>10 Weeks</strong></div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span>Yield Equiv.</span> <strong style="color: #008761;">4.2%</strong></div>
+            <div class="bg-surface-container-low border border-outline-variant/30 p-5 rounded-xl mt-6 relative overflow-hidden">
+              <div class="absolute right-0 top-0 opacity-5">
+                <span class="material-symbols-outlined" style="font-size: 80px; transform: translate(10px, -10px);">monitoring</span>
+              </div>
+              <p class="font-title-sm text-primary mb-3 relative z-10 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">auto_graph</span> Cycle Projections
+              </p>
+              <div class="flex justify-between items-center mb-2 relative z-10">
+                <span class="text-on-surface-variant font-body-sm">Total Duration</span> 
+                <strong id="swal-total-duration" class="text-title-md text-primary">10 Weeks</strong>
+              </div>
+              <div class="flex justify-between items-center relative z-10">
+                <span class="text-on-surface-variant font-body-sm">Yield Equiv.</span> 
+                <strong class="text-title-md text-tertiary-fixed-dim">4.2%</strong>
+              </div>
             </div>
           </div>
         `,
@@ -288,55 +471,156 @@ const formatCurrency = (val: number) =>
         showCancelButton: true,
         confirmButtonText: 'Save & Initialize',
         cancelButtonText: 'Cancel',
-        confirmButtonColor: '#00342b',
-        cancelButtonColor: '#e0e0e0',
-        width: '500px',
+        buttonsStyling: false,
+        width: '540px',
         customClass: {
-          popup: 'rounded-xl',
-          confirmButton: 'rounded-lg',
-          cancelButton: 'rounded-lg text-on-surface-variant'
+          popup: 'rounded-2xl p-4',
+          confirmButton: 'bg-primary text-white font-title-sm px-6 py-3 rounded-xl hover:opacity-90 transition-all active:scale-95 ml-3',
+          cancelButton: 'bg-surface-container-highest text-on-surface font-title-sm px-6 py-3 rounded-xl hover:bg-surface-variant transition-all active:scale-95 mr-3'
         },
-        preConfirm: () => {
+        didOpen: () => {
+          const payoutInput = document.getElementById('swal-payout');
+          const membersInput = document.getElementById('swal-members');
+          const contributionInput = document.getElementById('swal-contribution');
+          const durationSelect = document.getElementById('swal-duration');
+          const totalDurationDisplay = document.getElementById('swal-total-duration');
+
+          const parseNumber = (str) => parseFloat(str.replace(/,/g, '')) || 0;
+          const formatNumber = (num) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
+
+          const formatInputWhileTyping = (e) => {
+            const el = e.target;
+            let pos = el.selectionStart;
+            const val = el.value;
+            
+            // Count commas before the current cursor position
+            const commasBefore = (val.substring(0, pos).match(/,/g) || []).length;
+            
+            // Remove everything except numbers and a single decimal point
+            let clean = val.replace(/[^0-9.]/g, '');
+            const parts = clean.split('.');
+            if (parts.length > 2) {
+               clean = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            let formatted = '';
+            if (clean !== '') {
+                const parts = clean.split('.');
+                const integerPart = parseInt(parts[0] || 0, 10);
+                parts[0] = new Intl.NumberFormat('en-US').format(integerPart);
+                if (parts.length > 1) {
+                    formatted = parts[0] + '.' + parts[1].substring(0, 2);
+                } else if (clean.endsWith('.')) {
+                    formatted = parts[0] + '.';
+                } else {
+                    formatted = parts[0];
+                }
+            }
+            
+            el.value = formatted;
+            
+            // Calculate new cursor position
+            const commasAfter = (formatted.substring(0, pos).match(/,/g) || []).length;
+            pos += (commasAfter - commasBefore);
+            
+            // Restore cursor
+            el.setSelectionRange(pos, pos);
+            
+            updateCalculations(e.target);
+          };
+
+          const updateCalculations = (triggerElement = null) => {
+            const payout = parseNumber(payoutInput.value);
+            const members = parseInt(membersInput.value) || 1;
+            const durationType = durationSelect.value;
+
+            // Only auto-compute contribution if we are NOT currently typing inside the contribution field
+            if (triggerElement !== contributionInput && payout > 0 && members > 0) {
+              const contrib = payout / members;
+              contributionInput.value = formatNumber(contrib);
+            }
+
+            if (durationType === 'Weekly') {
+              totalDurationDisplay.textContent = `${members} Weeks`;
+            } else if (durationType === 'Bi-Weekly') {
+              totalDurationDisplay.textContent = `${members * 2} Weeks`;
+            } else if (durationType === 'Monthly') {
+              totalDurationDisplay.textContent = `${members} Months`;
+            }
+          };
+
+          payoutInput.addEventListener('input', formatInputWhileTyping);
+          contributionInput.addEventListener('input', formatInputWhileTyping);
+
+          membersInput.addEventListener('input', updateCalculations);
+          durationSelect.addEventListener('change', updateCalculations);
+          
+          updateCalculations();
+        },
+        showLoaderOnConfirm: true,
+        allowOutsideClick: () => !Swal.isLoading(),
+        preConfirm: async () => {
           const poolName = document.getElementById('swal-pool-name').value;
-          const payout = document.getElementById('swal-payout').value;
-          const contribution = document.getElementById('swal-contribution').value;
+          const payout = parseFloat(document.getElementById('swal-payout').value.replace(/,/g, ''));
+          const contribution = parseFloat(document.getElementById('swal-contribution').value.replace(/,/g, ''));
           const maxMembers = document.getElementById('swal-members').value;
+          const durationType = document.getElementById('swal-duration').value;
+
+          let cycleDays = 7;
+          if (durationType === 'Bi-Weekly') cycleDays = 14;
+          if (durationType === 'Monthly') cycleDays = 30;
 
           if (!poolName || !payout || !contribution || !maxMembers) {
             Swal.showValidationMessage('Please fill out all required fields');
             return false;
           }
 
-          return fetch('/api/pools/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              pool_name: poolName,
-              total_payout_amount: Number(payout),
-              cycle_contribution_amount: Number(contribution),
-              max_members: Number(maxMembers)
-            })
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(response.statusText)
-            }
-            return response.json()
-          })
-          .catch(error => {
-            Swal.showValidationMessage(`Request failed: ${error}`)
-          });
+          try {
+            const response = await fetch('/api/pools/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                pool_name: poolName,
+                total_payout_amount: Number(payout),
+                cycle_contribution_amount: Number(contribution),
+                max_members: Number(maxMembers),
+                cycle_duration_days: cycleDays
+              })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || response.statusText);
+            return data;
+          } catch (error) {
+            return { error: error.message };
+          }
         }
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire({
-            title: 'Pool Created!',
-            text: 'The new institutional micro-finance pool is now forming.',
-            icon: 'success',
-            confirmButtonColor: '#00342b'
-          }).then(() => {
-            window.location.reload();
-          });
+          if (result.value && result.value.error) {
+            Swal.fire({
+              title: 'Creation Failed',
+              text: result.value.error,
+              icon: 'error',
+              confirmButtonColor: '#00342b',
+              customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-lg'
+              }
+            });
+          } else {
+            Swal.fire({
+              title: 'Pool Created!',
+              text: 'The new institutional micro-finance pool is now forming.',
+              icon: 'success',
+              confirmButtonColor: '#00342b',
+              customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-lg'
+              }
+            }).then(() => {
+              window.location.reload();
+            });
+          }
         }
       });
     };

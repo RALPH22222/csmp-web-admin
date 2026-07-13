@@ -1,12 +1,43 @@
 ---
 import AdminLayout from "../layouts/AdminLayout.astro";
+import { supabaseAdmin } from "../server/supabase";
 
-const mockLogs = [
-  { id: 1, type: 'INFO', message: 'User logged in successfully.', timestamp: new Date().toLocaleString() },
-  { id: 2, type: 'WARNING', message: 'High load detected on node A.', timestamp: new Date(Date.now() - 3600000).toLocaleString() },
-  { id: 3, type: 'ERROR', message: 'Failed to connect to database.', timestamp: new Date(Date.now() - 7200000).toLocaleString() },
-  { id: 4, type: 'INFO', message: 'Disbursement transaction processed.', timestamp: new Date(Date.now() - 86400000).toLocaleString() },
-];
+const { data: transactions, error } = await supabaseAdmin
+  .from('transactions')
+  .select(`
+    id,
+    amount,
+    executed_at,
+    transaction_types ( type_name ),
+    transaction_statuses ( status_name ),
+    pool_members ( pools ( pool_name ) )
+  `)
+  .order('executed_at', { ascending: false })
+  .limit(100);
+
+const realLogs = (transactions || []).map(tx => {
+  const typeName = (tx.transaction_types as any)?.type_name || 'Transaction';
+  const statusName = (tx.transaction_statuses as any)?.status_name || 'Processing';
+  const poolName = (tx.pool_members as any)?.pools?.pool_name || 'Unknown Pool';
+  
+  let type = 'INFO';
+  let message = `${typeName} of ₱${tx.amount || 0} processed in ${poolName}. Status: ${statusName}`;
+
+  if (statusName.toLowerCase() === 'failed' || statusName.toLowerCase() === 'rejected') {
+    type = 'ERROR';
+    message = `Failed ${typeName.toLowerCase()} in ${poolName}.`;
+  } else if (statusName.toLowerCase() === 'pending' || statusName.toLowerCase() === 'processing') {
+    type = 'WARNING';
+    message = `Pending ${typeName.toLowerCase()} in ${poolName} needs review.`;
+  }
+
+  return {
+    id: tx.id,
+    type,
+    message,
+    timestamp: new Date(tx.executed_at).toLocaleString()
+  };
+});
 ---
 
 <AdminLayout title="CSMP - Logs" pageTitle="System Logs" currentPath="/logs">
@@ -24,7 +55,7 @@ const mockLogs = [
           </tr>
         </thead>
         <tbody class="divide-y divide-surface-container-highest">
-          {mockLogs.map(log => (
+          {realLogs.map(log => (
             <tr class="hover:bg-[#F0F4F3] transition-colors">
               <td class="px-lg py-4 text-body-sm text-on-surface-variant">{log.timestamp}</td>
               <td class="px-lg py-4">

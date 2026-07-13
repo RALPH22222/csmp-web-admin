@@ -37,6 +37,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
        }
     }
 
+    // Use the actually deployed Soroban contract address from testnet
+    const soroban_contract_address = 'CAWHCPHYWKP7JEHFBZZ5P7PNWLMV2DZC77C3U2HM45CHJQEIBGCIOW4C';
+
     const { data, error } = await supabase
       .from('pools')
       .insert({
@@ -46,7 +49,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         max_members,
         cycle_duration_days,
         pool_status_id: 1, // FORMING for admin created pools
-        organizer_id: organizer_id
+        organizer_id: organizer_id,
+        soroban_contract_address
       })
       .select()
       .single();

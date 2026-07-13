@@ -433,6 +433,8 @@ const formatCurrency = (val: number) =>
            const nextPayoutDate = new Date(startDate);
            nextPayoutDate.setDate(nextPayoutDate.getDate() + (currentCycle * cycleDays));
            nextPayoutStr = nextPayoutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } else if (members.length > 0 && members.length >= maxMembers) {
+           nextPayoutStr = 'Ready to Start';
         }
 
         let membersHtml = '';
@@ -631,8 +633,9 @@ const formatCurrency = (val: number) =>
         width: '540px',
         customClass: {
           popup: 'rounded-2xl p-4',
-          confirmButton: 'bg-primary text-white font-title-sm px-6 py-3 rounded-xl hover:opacity-90 transition-all active:scale-95 ml-3',
-          cancelButton: 'bg-surface-container-highest text-on-surface font-title-sm px-6 py-3 rounded-xl hover:bg-surface-variant transition-all active:scale-95 mr-3'
+          actions: 'flex gap-4 w-full mt-6',
+          confirmButton: 'bg-primary text-white font-title-sm px-6 py-3 rounded-xl hover:opacity-90 transition-all active:scale-95 flex-1',
+          cancelButton: 'bg-surface-container-highest text-on-surface font-title-sm px-6 py-3 rounded-xl hover:bg-surface-variant transition-all active:scale-95 flex-1'
         },
         didOpen: () => {
           const payoutInput = document.getElementById('swal-payout');

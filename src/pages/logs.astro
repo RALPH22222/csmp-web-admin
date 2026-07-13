@@ -55,21 +55,29 @@ const realLogs = (transactions || []).map(tx => {
           </tr>
         </thead>
         <tbody class="divide-y divide-surface-container-highest">
-          {realLogs.map(log => (
-            <tr class="hover:bg-[#F0F4F3] transition-colors">
-              <td class="px-lg py-4 text-body-sm text-on-surface-variant">{log.timestamp}</td>
-              <td class="px-lg py-4">
-                <span class={`px-2 py-1 text-[11px] font-bold rounded-full uppercase tracking-tighter ${
-                  log.type === 'INFO' ? 'bg-secondary-container/15 text-on-secondary-container' :
-                  log.type === 'WARNING' ? 'bg-[#FFF3E0] text-[#E65100]' :
-                  'bg-error-container/15 text-on-error-container'
-                }`}>
-                  {log.type}
-                </span>
+          {realLogs.length > 0 ? (
+            realLogs.map(log => (
+              <tr class="hover:bg-[#F0F4F3] transition-colors group">
+                <td class="px-lg py-4 text-body-sm text-on-surface-variant">{log.timestamp}</td>
+                <td class="px-lg py-4">
+                  <span class={`px-2 py-1 text-[11px] font-bold rounded-full uppercase tracking-tighter ${
+                    log.type === 'INFO' ? 'bg-secondary-container/15 text-on-secondary-container' :
+                    log.type === 'WARNING' ? 'bg-[#FFF3E0] text-[#E65100]' :
+                    'bg-error-container/15 text-on-error-container'
+                  }`}>
+                    {log.type}
+                  </span>
+                </td>
+                <td class="px-lg py-4 text-body-md text-on-surface font-medium">{log.message}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colspan="3" class="px-lg py-8 text-center text-on-surface-variant">
+                No system logs found. The transactions table is currently empty.
               </td>
-              <td class="px-lg py-4 text-body-md text-on-surface font-medium">{log.message}</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

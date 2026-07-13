@@ -1,0 +1,46 @@
+---
+import AdminLayout from "../layouts/AdminLayout.astro";
+
+const mockLogs = [
+  { id: 1, type: 'INFO', message: 'User logged in successfully.', timestamp: new Date().toLocaleString() },
+  { id: 2, type: 'WARNING', message: 'High load detected on node A.', timestamp: new Date(Date.now() - 3600000).toLocaleString() },
+  { id: 3, type: 'ERROR', message: 'Failed to connect to database.', timestamp: new Date(Date.now() - 7200000).toLocaleString() },
+  { id: 4, type: 'INFO', message: 'Disbursement transaction processed.', timestamp: new Date(Date.now() - 86400000).toLocaleString() },
+];
+---
+
+<AdminLayout title="CSMP - Logs" pageTitle="System Logs" currentPath="/logs">
+  <div class="bg-white border border-outline-variant/30 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] rounded-xl overflow-hidden flex flex-col">
+    <div class="px-lg py-4 border-b border-surface-container-highest flex justify-between items-center bg-surface-container-low">
+      <h4 class="font-headline-md text-headline-md text-primary">System Logs</h4>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-lowest">
+            <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Time</th>
+            <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Type</th>
+            <th class="px-lg py-3 font-label-caps text-label-caps text-on-surface-variant border-b border-surface-container-highest">Message</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-container-highest">
+          {mockLogs.map(log => (
+            <tr class="hover:bg-[#F0F4F3] transition-colors">
+              <td class="px-lg py-4 text-body-sm text-on-surface-variant">{log.timestamp}</td>
+              <td class="px-lg py-4">
+                <span class={`px-2 py-1 text-[11px] font-bold rounded-full uppercase tracking-tighter ${
+                  log.type === 'INFO' ? 'bg-secondary-container/15 text-on-secondary-container' :
+                  log.type === 'WARNING' ? 'bg-[#FFF3E0] text-[#E65100]' :
+                  'bg-error-container/15 text-on-error-container'
+                }`}>
+                  {log.type}
+                </span>
+              </td>
+              <td class="px-lg py-4 text-body-md text-on-surface font-medium">{log.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>

@@ -18,8 +18,8 @@ try {
 		// For simplicity, we can use the supabase client to get the user
 		const { createClient } = await import("@supabase/supabase-js");
 		const sb = createClient(
-			import.meta.env.PUBLIC_SUPABASE_URL,
-			import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+			(import.meta.env.PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL),
+			(import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? process.env.PUBLIC_SUPABASE_ANON_KEY),
 		);
 		const { data } = await sb.auth.getUser(accessToken);
 		if (data?.user?.email) {
@@ -96,6 +96,16 @@ try {
 					>group</span
 				>
 				<span class="font-title-sm text-title-sm">User Directory</span>
+			</a>
+			<a
+				class={`flex items-center gap-3 px-4 py-3 transition-all duration-200 active:scale-95 group ${currentPath === "/logs" ? "border-l-4 border-secondary-fixed bg-white/10 text-on-primary font-bold" : "text-on-primary/70 hover:text-on-primary hover:bg-white/5"}`}
+				href="/logs"
+			>
+				<span
+					class={`material-symbols-outlined ${currentPath === "/logs" ? "text-secondary-fixed" : ""}`}
+					>receipt_long</span
+				>
+				<span class="font-title-sm text-title-sm">Logs</span>
 			</a>
 		</nav>
 

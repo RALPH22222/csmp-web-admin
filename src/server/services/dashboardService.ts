@@ -35,7 +35,7 @@ export const getDashboardStats = async () => {
     // Assuming a fraction of total users are verified agents for the MVP
     const verifiedAgentsCount = Math.floor(usersCount * 0.8) || 0;
 
-    const recentActivity = transactionsRes.data || [];
+    let recentActivity: any[] = transactionsRes.data || [];
 
     // Calculate this month's disbursements
     const currentMonth = new Date().getMonth();

@@ -44,14 +44,6 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
   <Fragment slot="head">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <style>
-      .neon-marker {
-        background-color: #69FF87;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #69FF87, 0 0 20px #69FF87;
-        opacity: 0.8;
-      }
-    </style>
   </Fragment>
 
   <!-- METRIC CARDS -->
@@ -164,12 +156,12 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         <h4 class="font-headline-md text-headline-md text-primary">
           Recent Activity
         </h4>
-        <button class="text-primary text-sm font-bold hover:underline"
-          >View All Report</button
+        <a href="/logs" class="text-primary text-sm font-bold hover:underline"
+          >View All Report</a
         >
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+      <div class="w-full">
+        <table class="w-full table-fixed text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-lowest">
               <th
@@ -411,13 +403,11 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         'bacolod': [10.6650, 122.9498]
       };
 
-      const customIcon = L.divIcon({
-        className: 'neon-marker',
-        iconSize: [8, 8]
-      });
+      // Distinct colors for different users
+      const colors = ['#69FF87', '#FF69B4', '#00BFFF', '#FFD700', '#FF6347', '#DDA0DD', '#00FA9A', '#FF4500'];
 
       // Plot dynamic addresses
-      userAddresses.forEach(address => {
+      userAddresses.forEach((address, index) => {
         const addrLower = address.toLowerCase();
         let coords = [12.8797, 121.7740]; // Default PH center
         
@@ -433,7 +423,17 @@ const formattedTVL = new Intl.NumberFormat("en-PH", {
         const offsetLat = (Math.random() - 0.5) * 0.1;
         const offsetLng = (Math.random() - 0.5) * 0.1;
         
-        L.marker([coords[0] + offsetLat, coords[1] + offsetLng], { icon: customIcon }).addTo(map);
+        const color = colors[index % colors.length];
+        const dynamicIcon = L.divIcon({
+          className: '',
+          html: `<div style="width: 12px; height: 12px; background-color: ${color}; border-radius: 50%; box-shadow: 0 0 10px ${color}, 0 0 20px ${color}; opacity: 0.9;"></div>`,
+          iconSize: [12, 12],
+          iconAnchor: [6, 6]
+        });
+
+        L.marker([coords[0] + offsetLat, coords[1] + offsetLng], { icon: dynamicIcon })
+          .bindPopup(`<b>Registered Citizen</b><br/>${address}`)
+          .addTo(map);
       });
 
       // Force Leaflet to recalculate the container size to prevent gray/missing tiles

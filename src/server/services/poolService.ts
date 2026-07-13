@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Create a server-side client with the Service Role Key to bypass RLS for the Admin Dashboard
 const supabase = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL,
-    import.meta.env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    (import.meta.env.PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL),
+    (import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY) || (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? process.env.PUBLIC_SUPABASE_ANON_KEY)
 );
 export const getAdminPools = async () => {
     const { data: pools } = await supabase

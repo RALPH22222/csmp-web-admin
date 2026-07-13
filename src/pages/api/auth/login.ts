@@ -44,8 +44,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (data.session && data.user) {
     // Create a fresh client explicitly injected with the user's JWT to guarantee RLS bypass/validation
     const authedSupabase = createClient(
-      import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+      (import.meta.env.PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL),
+      (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? process.env.PUBLIC_SUPABASE_ANON_KEY),
       {
         global: { headers: { Authorization: `Bearer ${data.session.access_token}` } }
       }

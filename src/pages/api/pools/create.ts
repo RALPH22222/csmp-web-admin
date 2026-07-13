@@ -12,8 +12,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Use Service Role to ensure we can create it
     const supabase = createClient(
-      import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.SUPABASE_SERVICE_ROLE_KEY
+      (import.meta.env.PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL),
+      (import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY)
     );
 
     // Get the user from the cookie if available
@@ -25,8 +25,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (accessToken && refreshToken) {
        // Validate the session and get the user
        const authSupabase = createClient(
-         import.meta.env.PUBLIC_SUPABASE_URL,
-         import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+         (import.meta.env.PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL),
+         (import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? process.env.PUBLIC_SUPABASE_ANON_KEY)
        );
        const { data: { session }, error } = await authSupabase.auth.setSession({
          access_token: accessToken,

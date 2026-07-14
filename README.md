@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="./public/logo.png" width="80" alt="BayanIpon Logo" />
   <h1>BayanIpon - Admin Web Dashboard</h1>
   <p><strong>Protocol Control Center & Analytics</strong></p>
   <br />

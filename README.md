@@ -1,6 +1,10 @@
 <div align="center">
   <h1>BayanIpon - Admin Web Dashboard</h1>
   <p><strong>Protocol Control Center & Analytics</strong></p>
+  <br />
+  <a href="https://csmp-web.vercel.app/">
+    <img src="https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Deployed on Vercel" />
+  </a>
 </div>
 
 ---
